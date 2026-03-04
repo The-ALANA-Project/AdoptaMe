@@ -77,7 +77,7 @@ async function sendEmailNotification(subject: string, htmlBody: string) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "AdoptaMe <onboarding@resend.dev>",
+        from: "AdoptaMe <hola@adoptame.pe>",
         to: [ADMIN_EMAIL],
         subject,
         html: htmlBody,
@@ -245,7 +245,7 @@ app.post("/make-server-ba60542a/submissions", async (c) => {
 app.post("/make-server-ba60542a/inquiries", async (c) => {
   try {
     const body = await c.req.json();
-    const { animalId, animalNombre, nombre, email, telefono, mensaje } = body;
+    const { animalId, animalNombre, nombre, email, telefono, linkedin, facebook, instagram, vivienda, otrasMascotas, experiencia, mensaje } = body;
 
     if (!animalId || !nombre || !mensaje) {
       return c.json({ error: "Faltan campos requeridos." }, 400);
@@ -263,6 +263,12 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       nombre,
       email: email || "",
       telefono: telefono || "",
+      linkedin: linkedin || "",
+      facebook: facebook || "",
+      instagram: instagram || "",
+      vivienda: vivienda || "",
+      otrasMascotas: otrasMascotas || "",
+      experiencia: experiencia || "",
       mensaje,
       fechaEnvio: new Date().toISOString(),
       estado: "pendiente",
@@ -275,13 +281,23 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
     const htmlBody = `
       <h2>Nueva solicitud de adopcion en AdoptaMe</h2>
       <p>Alguien quiere adoptar a <strong>${animalNombre || animalId}</strong>.</p>
+      <h3>Datos del interesado</h3>
       <ul>
-        <li><strong>Nombre del interesado:</strong> ${nombre}</li>
+        <li><strong>Nombre:</strong> ${nombre}</li>
         <li><strong>Email:</strong> ${email || "No proporcionado"}</li>
         <li><strong>Telefono:</strong> ${telefono || "No proporcionado"}</li>
+        ${linkedin ? `<li><strong>LinkedIn:</strong> <a href="${linkedin}">${linkedin}</a></li>` : ""}
+        ${facebook ? `<li><strong>Facebook:</strong> ${facebook}</li>` : ""}
+        ${instagram ? `<li><strong>Instagram:</strong> @${instagram.replace("@", "")}</li>` : ""}
       </ul>
-      <p><strong>Mensaje:</strong></p>
-      <blockquote style="border-left: 3px solid #0D9488; padding-left: 12px; color: #333;">${mensaje}</blockquote>
+      <h3>Situacion del hogar</h3>
+      <ul>
+        <li><strong>Vivienda:</strong> ${vivienda || "No especificado"}</li>
+        <li><strong>Otras mascotas:</strong> ${otrasMascotas || "No especificado"}</li>
+        <li><strong>Experiencia previa:</strong> ${experiencia || "No especificado"}</li>
+      </ul>
+      <p><strong>Por que quiere adoptar:</strong></p>
+      <blockquote style="border-left: 3px solid #E2664A; padding-left: 12px; color: #333;">${mensaje}</blockquote>
       <p>Revisa la solicitud en el panel de administracion de AdoptaMe.</p>
     `;
     await sendEmailNotification(subject, htmlBody);

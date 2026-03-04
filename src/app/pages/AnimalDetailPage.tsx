@@ -13,6 +13,10 @@ import {
   X,
   Instagram,
   User,
+  Home,
+  PawPrint,
+  Linkedin,
+  Facebook,
 } from "lucide-react";
 import { getAnimals, getAnimal, submitInquiry } from "../data/api";
 import type { Animal } from "../data/types";
@@ -110,7 +114,14 @@ export function AnimalDetailPage() {
     nombre: "",
     email: "",
     telefono: "",
+    linkedin: "",
+    facebook: "",
+    instagram: "",
+    vivienda: "",
+    otrasMascotas: "",
+    experiencia: "",
     mensaje: "",
+    compromiso: false,
   });
 
   useEffect(() => {
@@ -201,6 +212,10 @@ export function AnimalDetailPage() {
   const handleInquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!animal) return;
+    if (!inquiry.compromiso) {
+      setInquiryError("Debes aceptar el compromiso de adopcion responsable para continuar.");
+      return;
+    }
     setInquiryError("");
     setInquiryLoading(true);
     try {
@@ -210,6 +225,12 @@ export function AnimalDetailPage() {
         nombre: inquiry.nombre,
         email: inquiry.email,
         telefono: inquiry.telefono,
+        linkedin: inquiry.linkedin,
+        facebook: inquiry.facebook,
+        instagram: inquiry.instagram,
+        vivienda: inquiry.vivienda,
+        otrasMascotas: inquiry.otrasMascotas,
+        experiencia: inquiry.experiencia,
         mensaje: inquiry.mensaje,
       });
       setInquirySubmitted(true);
@@ -273,15 +294,15 @@ export function AnimalDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Image — portrait format */}
         <div className="lg:col-span-3">
-          <div className="rounded-2xl overflow-hidden aspect-[4/5] bg-muted">
+          <div className="rounded-2xl overflow-hidden bg-muted">
             {animal.imagen ? (
               <ImageWithFallback
                 src={animal.imagen}
                 alt={animal.nombre}
-                className="w-full h-full object-cover"
+                className="w-full h-auto block"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
+              <div className="w-full aspect-[4/5] flex items-center justify-center">
                 <span style={{ fontSize: "5rem" }}>🐾</span>
               </div>
             )}
@@ -477,148 +498,304 @@ export function AnimalDetailPage() {
                 siguientes pasos.
               </p>
             </div>
-          ) : !showForm ? (
+          ) : (
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => {
+                setShowForm(true);
+                setTimeout(() => {
+                  document.getElementById("adoption-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 100);
+              }}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
               style={{ fontWeight: 500, fontSize: "1.0625rem" }}
             >
               <Heart className="w-5 h-5" />
               Quiero adoptar a {animal.nombre}
             </button>
-          ) : (
-            <div className="p-5 bg-card border border-border rounded-2xl">
-              <h3 className="mb-1" style={{ fontSize: "1.0625rem" }}>
-                Solicitud de adopcion
-              </h3>
-              <p
-                className="text-muted-foreground mb-5"
-                style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}
-              >
-                Completa tus datos y cuentanos por que te gustaria adoptar a{" "}
-                {animal.nombre}. Revisaremos tu solicitud y te pondremos en
-                contacto con su rescatista.
-              </p>
+          )}
+        </div>
+      </div>
+
+      {/* ===== Full-width Adoption Inquiry Form ===== */}
+      {!animal.adoptado && showForm && !inquirySubmitted && (
+        <div id="adoption-form" className="mt-12 scroll-mt-24">
+          <div className="p-6 sm:p-8 lg:p-10 bg-card border border-border rounded-2xl">
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-8">
+                
+                <h2 className="text-left" style={{ fontSize: "1.5rem", fontWeight: 600 }}>
+                  Solicitud de adopcion para {animal.nombre}
+                </h2>
+                <p
+                  className="text-muted-foreground mt-2 text-left"
+                  style={{ fontSize: "0.9375rem", lineHeight: 1.6, maxWidth: "560px" }}
+                >
+                  Queremos asegurarnos de que {animal.nombre} llegue al mejor hogar posible.
+                  Completa este formulario y revisaremos tu solicitud para ponerte en contacto con su rescatista.
+                </p>
+              </div>
 
               {inquiryError && (
                 <div
-                  className="p-3 bg-destructive/10 border border-destructive/20 rounded-xl mb-4 text-destructive"
+                  className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl mb-6 text-destructive text-center"
                   style={{ fontSize: "0.875rem" }}
                 >
                   {inquiryError}
                 </div>
               )}
 
-              <form onSubmit={handleInquirySubmit} className="space-y-4">
+              <form onSubmit={handleInquirySubmit} className="space-y-8">
+                {/* Section 1: Contact info */}
                 <div>
-                  <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                    Tu nombre *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Nombre completo"
-                    value={inquiry.nombre}
-                    onChange={(e) =>
-                      setInquiry((p) => ({ ...p, nombre: e.target.value }))
-                    }
-                    className={inputClass}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label
-                      className="block mb-1.5"
-                      style={{ fontSize: "0.875rem" }}
-                    >
-                      Correo
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="tu@correo.com"
-                      value={inquiry.email}
-                      onChange={(e) =>
-                        setInquiry((p) => ({ ...p, email: e.target.value }))
-                      }
-                      className={inputClass}
-                    />
+                  <div className="flex items-center gap-2 mb-4">
+                    
+                    <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Tus datos de contacto</h3>
                   </div>
-                  <div>
-                    <label
-                      className="block mb-1.5"
-                      style={{ fontSize: "0.875rem" }}
-                    >
-                      Telefono / WhatsApp
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="+51 999 999 999"
-                      value={inquiry.telefono}
-                      onChange={(e) =>
-                        setInquiry((p) => ({ ...p, telefono: e.target.value }))
-                      }
-                      className={inputClass}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="sm:col-span-2 lg:col-span-3">
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Nombre completo *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Tu nombre y apellido"
+                        value={inquiry.nombre}
+                        onChange={(e) => setInquiry((p) => ({ ...p, nombre: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Correo electronico
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="tu@correo.com"
+                        value={inquiry.email}
+                        onChange={(e) => setInquiry((p) => ({ ...p, email: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Telefono / WhatsApp
+                      </label>
+                      <input
+                        type="tel"
+                        placeholder="+51 999 999 999"
+                        value={inquiry.telefono}
+                        onChange={(e) => setInquiry((p) => ({ ...p, telefono: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
                 </div>
 
+                {/* Section 2: Social profiles */}
                 <div>
-                  <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                    Por que quieres adoptar a {animal.nombre}? *
-                  </label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Cuentanos sobre ti, tu hogar y por que te gustaria darle un hogar..."
-                    value={inquiry.mensaje}
-                    onChange={(e) =>
-                      setInquiry((p) => ({ ...p, mensaje: e.target.value }))
-                    }
-                    className={`${inputClass} resize-none`}
-                  />
+                  <div className="flex items-center gap-2 mb-2">
+                    
+                    <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Tus redes sociales</h3>
+                  </div>
+                  <p className="text-muted-foreground mb-4" style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}>
+                    Opcional, pero nos ayuda a conocerte mejor y agilizar el proceso.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-1.5 flex items-center gap-1.5" style={{ fontSize: "0.875rem" }}>
+                        <Linkedin className="w-3.5 h-3.5 text-muted-foreground" />
+                        LinkedIn
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://linkedin.com/in/tu-perfil"
+                        value={inquiry.linkedin}
+                        onChange={(e) => setInquiry((p) => ({ ...p, linkedin: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5 flex items-center gap-1.5" style={{ fontSize: "0.875rem" }}>
+                        <Facebook className="w-3.5 h-3.5 text-muted-foreground" />
+                        Facebook
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Tu nombre o enlace de perfil"
+                        value={inquiry.facebook}
+                        onChange={(e) => setInquiry((p) => ({ ...p, facebook: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5 flex items-center gap-1.5" style={{ fontSize: "0.875rem" }}>
+                        <Instagram className="w-3.5 h-3.5 text-muted-foreground" />
+                        Instagram
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="@tu_usuario"
+                        value={inquiry.instagram}
+                        onChange={(e) => setInquiry((p) => ({ ...p, instagram: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <p
-                  className="text-muted-foreground"
-                  style={{ fontSize: "0.75rem", lineHeight: 1.5 }}
-                >
-                  Tus datos solo seran compartidos con el rescatista una vez
-                  aprobada la solicitud. Respetamos tu privacidad.
-                </p>
+                {/* Section 3: Home situation */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    
+                    <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Tu hogar</h3>
+                  </div>
+                  <p className="text-muted-foreground mb-4" style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}>
+                    Esto nos ayuda a evaluar la compatibilidad con {animal.nombre}.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Tipo de vivienda
+                      </label>
+                      <select
+                        value={inquiry.vivienda}
+                        onChange={(e) => setInquiry((p) => ({ ...p, vivienda: e.target.value }))}
+                        className={inputClass}
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="Casa propia">Casa propia</option>
+                        <option value="Casa alquilada">Casa alquilada</option>
+                        <option value="Departamento propio">Departamento propio</option>
+                        <option value="Departamento alquilado">Departamento alquilado</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Otras mascotas en casa
+                      </label>
+                      <select
+                        value={inquiry.otrasMascotas}
+                        onChange={(e) => setInquiry((p) => ({ ...p, otrasMascotas: e.target.value }))}
+                        className={inputClass}
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="Ninguna">Ninguna</option>
+                        <option value="1 perro">1 perro</option>
+                        <option value="2+ perros">2+ perros</option>
+                        <option value="1 gato">1 gato</option>
+                        <option value="2+ gatos">2+ gatos</option>
+                        <option value="Perros y gatos">Perros y gatos</option>
+                        <option value="Otro tipo">Otro tipo de mascota</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Experiencia con mascotas
+                      </label>
+                      <select
+                        value={inquiry.experiencia}
+                        onChange={(e) => setInquiry((p) => ({ ...p, experiencia: e.target.value }))}
+                        className={inputClass}
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="Primera vez">Es mi primera mascota</option>
+                        <option value="He tenido antes">He tenido mascotas antes</option>
+                        <option value="Tengo actualmente">Tengo mascotas actualmente</option>
+                        <option value="Experiencia profesional">Experiencia profesional con animales</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
 
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    disabled={inquiryLoading}
-                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-60"
-                    style={{ fontWeight: 500 }}
+                {/* Section 4: Motivation */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    
+                    <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Tu motivacion</h3>
+                  </div>
+                  <div>
+                    <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                      Por que quieres adoptar a {animal.nombre}? *
+                    </label>
+                    <textarea
+                      required
+                      rows={4}
+                      placeholder="Cuentanos sobre ti, tu estilo de vida, tu hogar y por que te gustaria darle un hogar a este animal. Mientras mas detalle, mejor podemos evaluar tu solicitud."
+                      value={inquiry.mensaje}
+                      onChange={(e) => setInquiry((p) => ({ ...p, mensaje: e.target.value }))}
+                      className={`${inputClass} resize-none`}
+                    />
+                  </div>
+                </div>
+
+                {/* Commitment disclaimer */}
+                <div className="p-5 bg-secondary border border-border rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="compromiso"
+                      checked={inquiry.compromiso}
+                      onChange={(e) => setInquiry((p) => ({ ...p, compromiso: e.target.checked }))}
+                      className="mt-1 w-4 h-4 rounded border-border text-primary accent-primary flex-shrink-0"
+                    />
+                    <label htmlFor="compromiso" className="cursor-pointer" style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>
+                      <span style={{ fontWeight: 600 }}>Entiendo que adoptar es un compromiso serio.</span>{" "}
+                      <span className="text-muted-foreground">
+                        Adoptar un animal requiere tiempo, paciencia, atencion y recursos economicos para su alimentacion, salud y bienestar.
+                        Me comprometo a brindarle un hogar responsable y permanente, y entiendo que el equipo de AdoptaMe
+                        se reserva el derecho de evaluar y rechazar solicitudes si considera que no es un match adecuado.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Privacy note + submit */}
+                <div>
+                  <p
+                    className="text-muted-foreground mb-4"
+                    style={{ fontSize: "0.75rem", lineHeight: 1.5 }}
                   >
-                    {inquiryLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        Enviar solicitud
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-4 py-3 border border-border rounded-xl hover:bg-muted transition-colors"
-                  >
-                    Cancelar
-                  </button>
+                    Tus datos solo seran compartidos con el rescatista una vez aprobada la solicitud.
+                    Al enviar este formulario aceptas nuestra{" "}
+                    <Link to="/privacidad" className="text-primary hover:underline">politica de privacidad</Link>.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="submit"
+                      disabled={inquiryLoading || !inquiry.compromiso}
+                      className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{ fontWeight: 500, fontSize: "1rem" }}
+                    >
+                      {inquiryLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Enviando solicitud...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          Enviar solicitud de adopcion
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowForm(false)}
+                      className="px-6 py-3.5 border border-border rounded-xl hover:bg-muted transition-colors"
+                      style={{ fontWeight: 500 }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Related */}
       {related.length > 0 && (

@@ -46,6 +46,12 @@ export async function submitInquiry(inquiry: {
   nombre: string;
   email: string;
   telefono: string;
+  linkedin: string;
+  facebook: string;
+  instagram: string;
+  vivienda: string;
+  otrasMascotas: string;
+  experiencia: string;
   mensaje: string;
 }) {
   return request("/inquiries", {
