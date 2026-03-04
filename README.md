@@ -4,7 +4,7 @@ Plataforma comunitaria de adopcion animal en Peru.
 
 ![AdoptaMe](https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeihscx6ivorazotnxpzv3gaz2p3a3fdnbs2x6lss6vpp5kmfa3tdai/AdoptaMe%20Social%20Crawler.png)
 
-*Foto principal por [nombre del fotografo](enlace) — usada con permiso.*
+*Foto principal por [Victor G](https://unsplash.com/@victor_vector) en Unsplash.*
 
 **adoptame.pe**
 
