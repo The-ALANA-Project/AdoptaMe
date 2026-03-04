@@ -1,0 +1,64 @@
+export interface Animal {
+  id: string;
+  slug: string;
+  nombre: string;
+  especie: string;
+  raza: string;
+  edad: string;
+  sexo: string;
+  tamano: string;
+  ubicacion: string;
+  descripcion: string;
+  imagen: string;
+  vacunado: boolean;
+  esterilizado: boolean;
+  desparasitado?: boolean;
+  contactoNombre: string;
+  contactoEmail: string;
+  contactoWhatsapp: string;
+  contactoInstagram?: string;
+  contactoFacebook?: string;
+  contactoTiktok?: string;
+  contactoWeb?: string;
+  contactoSobreTi?: string;
+  fechaPublicacion: string;
+  adoptado?: boolean;
+}
+
+export interface Submission {
+  id: string;
+  nombre: string;
+  especie: string;
+  raza: string;
+  edad: string;
+  sexo: string;
+  tamano: string;
+  ubicacion: string;
+  descripcion: string;
+  imagen: string;
+  vacunado: boolean;
+  esterilizado: boolean;
+  desparasitado?: boolean;
+  contactoNombre: string;
+  contactoEmail: string;
+  contactoWhatsapp: string;
+  contactoSobreTi?: string;
+  contactoInstagram?: string;
+  contactoFacebook?: string;
+  contactoTiktok?: string;
+  contactoWeb?: string;
+  fechaEnvio: string;
+  estado: string;
+}
+
+export interface Inquiry {
+  id: string;
+  animalId: string;
+  animalNombre: string;
+  nombre: string;
+  email: string;
+  telefono: string;
+  mensaje: string;
+  fechaEnvio: string;
+  estado: string;
+}
