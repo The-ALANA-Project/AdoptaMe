@@ -114,6 +114,155 @@ async function ensureBucket() {
 }
 
 // ============================================================
+// OG META / SOCIAL CRAWLER ENDPOINT
+// ============================================================
+
+const SITE_URL = "https://adoptame.pe";
+const DEFAULT_OG_IMAGE =
+  "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeihscx6ivorazotnxpzv3gaz2p3a3fdnbs2x6lss6vpp5kmfa3tdai/AdoptaMe%20Social%20Crawler.png";
+const SITE_TITLE = "AdoptaMe — Adopta un animal en Peru";
+const SITE_DESCRIPTION =
+  "Encuentra a tu companero ideal. Plataforma comunitaria de adopcion animal en Peru.";
+
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildOgHtml(opts: {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+  type?: string;
+}) {
+  const { title, description, image, url, type = "website" } = opts;
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(title)}</title>
+  <meta name="description" content="${escapeHtml(description)}" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#E2664A" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="${escapeHtml(type)}" />
+  <meta property="og:url" content="${escapeHtml(url)}" />
+  <meta property="og:title" content="${escapeHtml(title)}" />
+  <meta property="og:description" content="${escapeHtml(description)}" />
+  <meta property="og:image" content="${escapeHtml(image)}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="AdoptaMe" />
+  <meta property="og:locale" content="es_PE" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${escapeHtml(title)}" />
+  <meta name="twitter:description" content="${escapeHtml(description)}" />
+  <meta name="twitter:image" content="${escapeHtml(image)}" />
+
+  <link rel="canonical" href="${escapeHtml(url)}" />
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(url)}" />
+</head>
+<body>
+  <p>Redirigiendo a <a href="${escapeHtml(url)}">${escapeHtml(title)}</a>...</p>
+</body>
+</html>`;
+}
+
+// GET /og?path=/animales/pelusa  — returns crawler-friendly HTML with OG tags
+app.get("/make-server-ba60542a/og", async (c) => {
+  try {
+    const path = c.req.query("path") || "/";
+    const url = `${SITE_URL}${path}`;
+
+    // Animal detail page: /animales/:slug
+    const animalMatch = path.match(/^\/animales\/([^/]+)$/);
+    if (animalMatch) {
+      const slug = decodeURIComponent(animalMatch[1]);
+      // Try direct ID lookup, then slug lookup
+      let animal = await kv.get(`animal:${slug}`);
+      if (!animal) {
+        const all = await kv.getByPrefix("animal:");
+        animal = all.find((a: any) => a.slug === slug) || null;
+      }
+      if (animal) {
+        const title = `${animal.nombre} busca hogar | AdoptaMe`;
+        const description = `${animal.nombre} es un ${(animal.especie || "").toLowerCase()} ${(animal.raza || "").toLowerCase()}, ${animal.edad}, en ${animal.ubicacion}. Conocelo y dale un hogar.`;
+        const image = animal.imagen || DEFAULT_OG_IMAGE;
+        return c.html(buildOgHtml({ title, description, image, url }));
+      }
+    }
+
+    // Browse page
+    if (path === "/animales") {
+      return c.html(
+        buildOgHtml({
+          title: "Animales en adopcion | AdoptaMe",
+          description:
+            "Explora todos los animales disponibles para adopcion en Peru. Perros, gatos y mas esperan por un hogar.",
+          image: DEFAULT_OG_IMAGE,
+          url,
+        })
+      );
+    }
+
+    // Submit page
+    if (path === "/enviar") {
+      return c.html(
+        buildOgHtml({
+          title: "Publicar un animal en adopcion | AdoptaMe",
+          description:
+            "Tienes un animal rescatado que busca hogar? Envia su perfil a AdoptaMe para que lo vean miles de personas.",
+          image: DEFAULT_OG_IMAGE,
+          url,
+        })
+      );
+    }
+
+    // Sobre mi
+    if (path === "/sobre-mi") {
+      return c.html(
+        buildOgHtml({
+          title: "Sobre mi | AdoptaMe",
+          description:
+            "Conoce la historia detras de AdoptaMe, una plataforma comunitaria de adopcion animal en Peru.",
+          image: DEFAULT_OG_IMAGE,
+          url,
+        })
+      );
+    }
+
+    // Default: homepage or any other page
+    return c.html(
+      buildOgHtml({
+        title: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+        image: DEFAULT_OG_IMAGE,
+        url,
+      })
+    );
+  } catch (err) {
+    console.log(`Error generating OG HTML: ${err}`);
+    // Fallback to default OG even on error
+    return c.html(
+      buildOgHtml({
+        title: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+        image: DEFAULT_OG_IMAGE,
+        url: SITE_URL,
+      })
+    );
+  }
+});
+
+// ============================================================
 // PUBLIC ROUTES
 // ============================================================
 
