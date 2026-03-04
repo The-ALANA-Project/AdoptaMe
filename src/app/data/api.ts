@@ -46,6 +46,8 @@ export async function submitInquiry(inquiry: {
   nombre: string;
   email: string;
   telefono: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
   linkedin: string;
   facebook: string;
   instagram: string;
@@ -53,6 +55,7 @@ export async function submitInquiry(inquiry: {
   otrasMascotas: string;
   experiencia: string;
   mensaje: string;
+  seguimiento: boolean;
 }) {
   return request("/inquiries", {
     method: "POST",
@@ -149,10 +152,11 @@ export async function adminDeleteAnimal(password: string, id: string) {
   });
 }
 
-export async function adminToggleAdopted(password: string, id: string) {
+export async function adminToggleAdopted(password: string, id: string, inquiryId?: string) {
   return request(`/admin/animals/${id}/toggle-adopted`, {
     method: "POST",
     headers: adminHeaders(password),
+    body: JSON.stringify({ inquiryId: inquiryId || null }),
   });
 }
 
@@ -169,5 +173,20 @@ export async function adminUpdateAnimal(password: string, id: string, updates: R
     method: "PUT",
     headers: adminHeaders(password),
     body: JSON.stringify(updates),
+  });
+}
+
+export async function adminGetSeguimientos(password: string) {
+  const data = await request("/admin/seguimientos", {
+    headers: adminHeaders(password),
+  });
+  return data.seguimientos || [];
+}
+
+export async function adminAddSeguimientoNote(password: string, id: string, texto: string) {
+  return request(`/admin/seguimientos/${id}/notes`, {
+    method: "POST",
+    headers: adminHeaders(password),
+    body: JSON.stringify({ texto }),
   });
 }

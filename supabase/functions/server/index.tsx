@@ -394,7 +394,7 @@ app.post("/make-server-ba60542a/submissions", async (c) => {
 app.post("/make-server-ba60542a/inquiries", async (c) => {
   try {
     const body = await c.req.json();
-    const { animalId, animalNombre, nombre, email, telefono, linkedin, facebook, instagram, vivienda, otrasMascotas, experiencia, mensaje } = body;
+    const { animalId, animalNombre, nombre, email, telefono, tipoDocumento, numeroDocumento, linkedin, facebook, instagram, vivienda, otrasMascotas, experiencia, mensaje, seguimiento } = body;
 
     if (!animalId || !nombre || !mensaje) {
       return c.json({ error: "Faltan campos requeridos." }, 400);
@@ -412,6 +412,8 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       nombre,
       email: email || "",
       telefono: telefono || "",
+      tipoDocumento: tipoDocumento || "",
+      numeroDocumento: numeroDocumento || "",
       linkedin: linkedin || "",
       facebook: facebook || "",
       instagram: instagram || "",
@@ -419,6 +421,7 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       otrasMascotas: otrasMascotas || "",
       experiencia: experiencia || "",
       mensaje,
+      seguimiento: !!seguimiento,
       fechaEnvio: new Date().toISOString(),
       estado: "pendiente",
     };
@@ -435,6 +438,7 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
         <li><strong>Nombre:</strong> ${nombre}</li>
         <li><strong>Email:</strong> ${email || "No proporcionado"}</li>
         <li><strong>Telefono:</strong> ${telefono || "No proporcionado"}</li>
+        ${tipoDocumento && numeroDocumento ? `<li><strong>Documento:</strong> ${tipoDocumento} ${numeroDocumento}</li>` : ""}
         ${linkedin ? `<li><strong>LinkedIn:</strong> <a href="${linkedin}">${linkedin}</a></li>` : ""}
         ${facebook ? `<li><strong>Facebook:</strong> ${facebook}</li>` : ""}
         ${instagram ? `<li><strong>Instagram:</strong> @${instagram.replace("@", "")}</li>` : ""}
@@ -447,6 +451,10 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       </ul>
       <p><strong>Por que quiere adoptar:</strong></p>
       <blockquote style="border-left: 3px solid #E2664A; padding-left: 12px; color: #333;">${mensaje}</blockquote>
+      <h3>Compromisos</h3>
+      <ul>
+        <li><strong>Seguimiento post-adopcion:</strong> ${seguimiento ? "✅ Aceptado" : "❌ No aceptado"}</li>
+      </ul>
       <p>Revisa la solicitud en el panel de administracion de AdoptaMe.</p>
     `;
     await sendEmailNotification(subject, htmlBody);
@@ -648,8 +656,45 @@ app.post("/make-server-ba60542a/admin/animals/:id/toggle-adopted", async (c) => 
     const animal = await kv.get(`animal:${animalId}`);
     if (!animal) return c.json({ error: "Animal no encontrado" }, 404);
 
+    const body = await c.req.json().catch(() => ({}));
+    const { inquiryId } = body;
+
     animal.adoptado = !animal.adoptado;
     await kv.set(`animal:${animalId}`, animal);
+
+    // If marking as adopted and an inquiry was selected, create a seguimiento record
+    if (animal.adoptado && inquiryId) {
+      const inquiry = await kv.get(`inquiry:${inquiryId}`);
+      if (inquiry) {
+        const segId = await nextId("seg");
+        const seguimiento = {
+          id: segId,
+          animalId: animal.id,
+          animalNombre: animal.nombre,
+          animalSlug: animal.slug || "",
+          animalImagen: animal.imagen || "",
+          adoptanteNombre: inquiry.nombre,
+          adoptanteEmail: inquiry.email || "",
+          adoptanteTelefono: inquiry.telefono || "",
+          adoptanteTipoDoc: inquiry.tipoDocumento || "",
+          adoptanteNumeroDoc: inquiry.numeroDocumento || "",
+          inquiryId: inquiry.id,
+          fechaAdopcion: new Date().toISOString(),
+          notas: [],
+        };
+        await kv.set(`seguimiento:${segId}`, seguimiento);
+      }
+    }
+
+    // If un-marking as adopted, remove associated seguimiento records
+    if (!animal.adoptado) {
+      const segs = await kv.getByPrefix("seguimiento:");
+      for (const seg of segs) {
+        if (seg.animalId === animalId) {
+          await kv.del(`seguimiento:${seg.id}`);
+        }
+      }
+    }
 
     return c.json({ message: animal.adoptado ? "Marcado como adoptado" : "Marcado como disponible", animal });
   } catch (err) {
@@ -969,6 +1014,48 @@ app.post("/make-server-ba60542a/admin/seed-pending", async (c) => {
   } catch (err) {
     console.log(`Error seeding pending submissions: ${err}`);
     return c.json({ error: `Error al crear envios pendientes: ${err}` }, 500);
+  }
+});
+
+// ============================================================
+// SEGUIMIENTO (post-adoption follow-up) ROUTES
+// ============================================================
+
+// GET /admin/seguimientos — list all follow-up records
+app.get("/make-server-ba60542a/admin/seguimientos", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const seguimientos = await kv.getByPrefix("seguimiento:");
+    seguimientos.sort((a: any, b: any) =>
+      new Date(b.fechaAdopcion).getTime() - new Date(a.fechaAdopcion).getTime()
+    );
+    return c.json({ seguimientos });
+  } catch (err) {
+    console.log(`Error fetching seguimientos: ${err}`);
+    return c.json({ error: `Error al obtener seguimientos: ${err}` }, 500);
+  }
+});
+
+// POST /admin/seguimientos/:id/notes — add a follow-up note
+app.post("/make-server-ba60542a/admin/seguimientos/:id/notes", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const segId = c.req.param("id");
+    const seg = await kv.get(`seguimiento:${segId}`);
+    if (!seg) return c.json({ error: "Seguimiento no encontrado" }, 404);
+
+    const { texto } = await c.req.json();
+    if (!texto) return c.json({ error: "El texto de la nota es requerido" }, 400);
+
+    const notas = seg.notas || [];
+    notas.push({ fecha: new Date().toISOString(), texto });
+    seg.notas = notas;
+    await kv.set(`seguimiento:${segId}`, seg);
+
+    return c.json({ message: "Nota agregada", seguimiento: seg });
+  } catch (err) {
+    console.log(`Error adding seguimiento note: ${err}`);
+    return c.json({ error: `Error al agregar nota: ${err}` }, 500);
   }
 });
 

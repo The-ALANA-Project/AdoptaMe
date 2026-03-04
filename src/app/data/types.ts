@@ -58,7 +58,37 @@ export interface Inquiry {
   nombre: string;
   email: string;
   telefono: string;
+  tipoDocumento: string;
+  numeroDocumento: string;
+  linkedin: string;
+  facebook: string;
+  instagram: string;
+  vivienda: string;
+  otrasMascotas: string;
+  experiencia: string;
   mensaje: string;
+  seguimiento: boolean;
   fechaEnvio: string;
   estado: string;
+}
+
+export interface SeguimientoNote {
+  fecha: string;
+  texto: string;
+}
+
+export interface Seguimiento {
+  id: string;
+  animalId: string;
+  animalNombre: string;
+  animalSlug: string;
+  animalImagen: string;
+  adoptanteNombre: string;
+  adoptanteEmail: string;
+  adoptanteTelefono: string;
+  adoptanteTipoDoc: string;
+  adoptanteNumeroDoc: string;
+  inquiryId: string;
+  fechaAdopcion: string;
+  notas: SeguimientoNote[];
 }

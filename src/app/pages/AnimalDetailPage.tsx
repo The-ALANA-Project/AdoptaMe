@@ -114,6 +114,8 @@ export function AnimalDetailPage() {
     nombre: "",
     email: "",
     telefono: "",
+    tipoDocumento: "",
+    numeroDocumento: "",
     linkedin: "",
     facebook: "",
     instagram: "",
@@ -122,6 +124,7 @@ export function AnimalDetailPage() {
     experiencia: "",
     mensaje: "",
     compromiso: false,
+    seguimiento: false,
   });
 
   useEffect(() => {
@@ -216,6 +219,10 @@ export function AnimalDetailPage() {
       setInquiryError("Debes aceptar el compromiso de adopcion responsable para continuar.");
       return;
     }
+    if (!inquiry.seguimiento) {
+      setInquiryError("Debes aceptar el seguimiento post-adopcion para continuar.");
+      return;
+    }
     setInquiryError("");
     setInquiryLoading(true);
     try {
@@ -225,6 +232,8 @@ export function AnimalDetailPage() {
         nombre: inquiry.nombre,
         email: inquiry.email,
         telefono: inquiry.telefono,
+        tipoDocumento: inquiry.tipoDocumento,
+        numeroDocumento: inquiry.numeroDocumento,
         linkedin: inquiry.linkedin,
         facebook: inquiry.facebook,
         instagram: inquiry.instagram,
@@ -232,6 +241,7 @@ export function AnimalDetailPage() {
         otrasMascotas: inquiry.otrasMascotas,
         experiencia: inquiry.experiencia,
         mensaje: inquiry.mensaje,
+        seguimiento: inquiry.seguimiento,
       });
       setInquirySubmitted(true);
     } catch (err: any) {
@@ -589,6 +599,34 @@ export function AnimalDetailPage() {
                         className={inputClass}
                       />
                     </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Tipo de documento
+                      </label>
+                      <select
+                        value={inquiry.tipoDocumento}
+                        onChange={(e) => setInquiry((p) => ({ ...p, tipoDocumento: e.target.value }))}
+                        className={inputClass}
+                      >
+                        <option value="">Seleccionar...</option>
+                        <option value="DNI">DNI</option>
+                        <option value="CE">CE (Carnet de Extranjeria)</option>
+                      </select>
+                    </div>
+                    {inquiry.tipoDocumento && (
+                      <div>
+                        <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                          Numero de {inquiry.tipoDocumento}
+                        </label>
+                        <input
+                          type="text"
+                          placeholder={inquiry.tipoDocumento === "DNI" ? "12345678" : "001234567890"}
+                          value={inquiry.numeroDocumento}
+                          onChange={(e) => setInquiry((p) => ({ ...p, numeroDocumento: e.target.value }))}
+                          className={inputClass}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -751,6 +789,25 @@ export function AnimalDetailPage() {
                   </div>
                 </div>
 
+                {/* Post-adoption follow-up */}
+                <div className="p-5 bg-secondary border border-border rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="seguimiento"
+                      checked={inquiry.seguimiento}
+                      onChange={(e) => setInquiry((p) => ({ ...p, seguimiento: e.target.checked }))}
+                      className="mt-1 w-4 h-4 rounded border-border text-primary accent-primary flex-shrink-0"
+                    />
+                    <label htmlFor="seguimiento" className="cursor-pointer" style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>
+                      <span style={{ fontWeight: 600 }}>Acepto el seguimiento post-adopcion.</span>{" "}
+                      <span className="text-muted-foreground">
+                        Entiendo que AdoptaMe puede contactarme para verificar el bienestar de {animal.nombre} en su nuevo hogar.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
                 {/* Privacy note + submit */}
                 <div>
                   <p
@@ -765,7 +822,7 @@ export function AnimalDetailPage() {
                   <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       type="submit"
-                      disabled={inquiryLoading || !inquiry.compromiso}
+                      disabled={inquiryLoading || !inquiry.compromiso || !inquiry.seguimiento}
                       className="flex-1 flex items-center justify-center gap-2 px-6 py-3.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
                       style={{ fontWeight: 500, fontSize: "1rem" }}
                     >

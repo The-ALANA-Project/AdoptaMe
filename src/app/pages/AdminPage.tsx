@@ -16,6 +16,14 @@ import {
   Globe,
   User,
   Pencil,
+  ClipboardList,
+  Send,
+  Home,
+  Instagram,
+  Linkedin,
+  Facebook,
+  FileText,
+  ShieldCheck,
 } from "lucide-react";
 import {
   adminGetSubmissions,
@@ -30,37 +38,30 @@ import {
   adminToggleAdopted,
   adminUpdateSubmission,
   adminUpdateAnimal,
+  adminGetSeguimientos,
+  adminAddSeguimientoNote,
 } from "../data/api";
-import type { Animal, Submission } from "../data/types";
+import type { Animal, Submission, Inquiry, Seguimiento } from "../data/types";
 import { AdminEditModal } from "../components/AdminEditModal";
-
-interface Inquiry {
-  id: string;
-  animalId: string;
-  animalNombre: string;
-  nombre: string;
-  email: string;
-  telefono: string;
-  mensaje: string;
-  fechaEnvio: string;
-  estado: string;
-}
 
 export function AdminPage() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  const [tab, setTab] = useState<"submissions" | "animals" | "inquiries">("animals");
+  const [tab, setTab] = useState<"submissions" | "animals" | "inquiries" | "seguimiento">("animals");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [seedMsg, setSeedMsg] = useState("");
   const hasAutoSeeded = useRef(false);
   const [editItem, setEditItem] = useState<{ item: any; type: "submission" | "animal" } | null>(null);
+  const [adoptPickerAnimal, setAdoptPickerAnimal] = useState<Animal | null>(null);
+  const [noteText, setNoteText] = useState<Record<string, string>>({});
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -73,6 +74,12 @@ export function AdminPage() {
       setSubmissions(subs);
       setAnimals(anims);
       setInquiries(inqs);
+
+      // Also load seguimientos
+      try {
+        const segs = await adminGetSeguimientos(password);
+        setSeguimientos(segs);
+      } catch { /* seguimiento table may be empty */ }
 
       // Auto-seed if no animals exist (only once per session)
       if (anims.length === 0 && !hasAutoSeeded.current) {
@@ -199,15 +206,16 @@ export function AdminPage() {
     }
   };
 
-  const handleToggleAdopted = async (id: string) => {
+  const handleToggleAdopted = async (id: string, inquiryId?: string) => {
     setActionLoading(id);
     try {
-      await adminToggleAdopted(password, id);
+      await adminToggleAdopted(password, id, inquiryId);
       await loadData();
     } catch (err) {
       console.error("Error toggling adopted:", err);
     } finally {
       setActionLoading(null);
+      setAdoptPickerAnimal(null);
     }
   };
 
@@ -364,6 +372,17 @@ export function AdminPage() {
           style={{ fontSize: "0.875rem", fontWeight: 500 }}
         >
           Publicados ({animals.length})
+        </button>
+        <button
+          onClick={() => setTab("seguimiento")}
+          className={`px-5 py-2.5 rounded-lg transition-colors ${
+            tab === "seguimiento"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={{ fontSize: "0.875rem", fontWeight: 500 }}
+        >
+          Seguimiento ({seguimientos.length})
         </button>
       </div>
 
@@ -544,10 +563,13 @@ export function AdminPage() {
 
                 {expandedId === inq.id && (
                   <div className="px-4 pb-4 border-t border-border pt-4 space-y-3">
+                    {/* Motivation */}
                     <div>
                       <span className="text-muted-foreground block mb-1" style={{ fontSize: "0.75rem" }}>Mensaje</span>
                       <p style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>{inq.mensaje}</p>
                     </div>
+
+                    {/* Contact info */}
                     <div className="flex flex-wrap gap-4" style={{ fontSize: "0.875rem" }}>
                       {inq.email && (
                         <a href={`mailto:${inq.email}`} className="flex items-center gap-1.5 text-primary no-underline hover:underline">
@@ -562,6 +584,78 @@ export function AdminPage() {
                         </a>
                       )}
                     </div>
+
+                    {/* Document ID */}
+                    {inq.tipoDocumento && inq.numeroDocumento && (
+                      <div className="flex items-center gap-1.5" style={{ fontSize: "0.875rem" }}>
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">{inq.tipoDocumento}:</span>
+                        <span style={{ fontWeight: 500 }}>{inq.numeroDocumento}</span>
+                      </div>
+                    )}
+
+                    {/* Social profiles */}
+                    {(inq.linkedin || inq.facebook || inq.instagram) && (
+                      <div className="flex flex-wrap gap-3" style={{ fontSize: "0.8125rem" }}>
+                        {inq.linkedin && (
+                          <a href={inq.linkedin} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80 transition-opacity">
+                            <Linkedin className="w-3.5 h-3.5" />
+                            LinkedIn
+                          </a>
+                        )}
+                        {inq.facebook && (
+                          <span className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5">
+                            <Facebook className="w-3.5 h-3.5" />
+                            {inq.facebook}
+                          </span>
+                        )}
+                        {inq.instagram && (
+                          <a href={`https://instagram.com/${inq.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80 transition-opacity">
+                            <Instagram className="w-3.5 h-3.5" />
+                            @{inq.instagram.replace("@", "")}
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Home situation */}
+                    {(inq.vivienda || inq.otrasMascotas || inq.experiencia) && (
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <span className="text-muted-foreground flex items-center gap-1.5 mb-2" style={{ fontSize: "0.75rem" }}>
+                          <Home className="w-3.5 h-3.5" />
+                          Situacion del hogar
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" style={{ fontSize: "0.875rem" }}>
+                          {inq.vivienda && (
+                            <div>
+                              <span className="text-muted-foreground block" style={{ fontSize: "0.75rem" }}>Vivienda</span>
+                              {inq.vivienda}
+                            </div>
+                          )}
+                          {inq.otrasMascotas && (
+                            <div>
+                              <span className="text-muted-foreground block" style={{ fontSize: "0.75rem" }}>Otras mascotas</span>
+                              {inq.otrasMascotas}
+                            </div>
+                          )}
+                          {inq.experiencia && (
+                            <div>
+                              <span className="text-muted-foreground block" style={{ fontSize: "0.75rem" }}>Experiencia</span>
+                              {inq.experiencia}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Seguimiento consent */}
+                    <div className="flex items-center gap-2" style={{ fontSize: "0.8125rem" }}>
+                      <ShieldCheck className={`w-4 h-4 ${inq.seguimiento ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className={inq.seguimiento ? "text-primary" : "text-muted-foreground"} style={{ fontWeight: 500 }}>
+                        Seguimiento post-adopcion: {inq.seguimiento ? "Aceptado ✓" : "No aceptado"}
+                      </span>
+                    </div>
+
                     <div>
                       <a href={`/animales/${inq.animalId}`} target="_blank" rel="noopener noreferrer" className="text-primary no-underline hover:underline" style={{ fontSize: "0.8125rem" }}>
                         Ver perfil de {inq.animalNombre} →
@@ -571,6 +665,174 @@ export function AdminPage() {
                 )}
               </div>
             ))}
+          </div>
+        )
+      ) : tab === "seguimiento" ? (
+        /* ===== Seguimiento tab ===== */
+        seguimientos.length === 0 ? (
+          <div className="text-center py-16 bg-card border border-border rounded-2xl">
+            <ClipboardList className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <h3 className="mb-1">No hay seguimientos activos</h3>
+            <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
+              Cuando marques un animal como adoptado y selecciones al adoptante, aparecera aqui para seguimiento
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {seguimientos.map((seg) => {
+              const daysSinceAdoption = Math.floor((Date.now() - new Date(seg.fechaAdopcion).getTime()) / (1000 * 60 * 60 * 24));
+              const milestones = [
+                { label: "1 semana", days: 7 },
+                { label: "1 mes", days: 30 },
+                { label: "3 meses", days: 90 },
+                { label: "6 meses", days: 180 },
+              ];
+              return (
+                <div key={seg.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-primary transition-colors">
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setExpandedId(expandedId === seg.id ? null : seg.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      {seg.animalImagen && (
+                        <img src={seg.animalImagen} alt={seg.animalNombre} className="w-12 h-12 rounded-lg object-cover" />
+                      )}
+                      <div>
+                        <p style={{ fontWeight: 500 }}>
+                          {seg.animalNombre}{" "}
+                          <span className="text-muted-foreground" style={{ fontWeight: 400, fontSize: "0.875rem" }}>
+                            → adoptado por <span className="text-primary" style={{ fontWeight: 500 }}>{seg.adoptanteNombre}</span>
+                          </span>
+                        </p>
+                        <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
+                          Adoptado: {new Date(seg.fechaAdopcion).toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric" })}
+                          {" · "}{daysSinceAdoption} dias · {(seg.notas || []).length} nota(s)
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {expandedId === seg.id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                    </div>
+                  </div>
+
+                  {expandedId === seg.id && (
+                    <div className="px-4 pb-4 border-t border-border pt-4 space-y-4">
+                      {/* Adopter contact */}
+                      <div className="flex flex-wrap gap-4" style={{ fontSize: "0.875rem" }}>
+                        {seg.adoptanteEmail && (
+                          <a href={`mailto:${seg.adoptanteEmail}`} className="flex items-center gap-1.5 text-primary no-underline hover:underline">
+                            <Mail className="w-4 h-4" />
+                            {seg.adoptanteEmail}
+                          </a>
+                        )}
+                        {seg.adoptanteTelefono && (
+                          <a href={`https://wa.me/${seg.adoptanteTelefono.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline">
+                            <Phone className="w-4 h-4" />
+                            {seg.adoptanteTelefono}
+                          </a>
+                        )}
+                        {seg.adoptanteTipoDoc && seg.adoptanteNumeroDoc && (
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <FileText className="w-4 h-4" />
+                            {seg.adoptanteTipoDoc}: {seg.adoptanteNumeroDoc}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Milestones */}
+                      <div>
+                        <span className="text-muted-foreground block mb-2" style={{ fontSize: "0.75rem" }}>Hitos de seguimiento</span>
+                        <div className="flex gap-2 flex-wrap">
+                          {milestones.map((m) => (
+                            <span
+                              key={m.days}
+                              className={`px-3 py-1 rounded-lg text-xs font-medium ${
+                                daysSinceAdoption >= m.days
+                                  ? "bg-primary/10 text-primary border border-primary/20"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {m.label} {daysSinceAdoption >= m.days ? "✓" : `(faltan ${m.days - daysSinceAdoption}d)`}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Notes timeline */}
+                      <div>
+                        <span className="text-muted-foreground block mb-2" style={{ fontSize: "0.75rem" }}>Notas de seguimiento</span>
+                        {(seg.notas || []).length === 0 ? (
+                          <p className="text-muted-foreground italic" style={{ fontSize: "0.8125rem" }}>Aun no hay notas registradas</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {(seg.notas || []).map((nota, i) => (
+                              <div key={i} className="p-3 bg-muted/50 rounded-lg">
+                                <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
+                                  {new Date(nota.fecha).toLocaleDateString("es-PE", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                                <p style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>{nota.texto}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add note form */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Agregar nota de seguimiento..."
+                          value={noteText[seg.id] || ""}
+                          onChange={(e) => setNoteText((prev) => ({ ...prev, [seg.id]: e.target.value }))}
+                          className="flex-1 px-3 py-2 bg-input-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          onKeyDown={async (e) => {
+                            if (e.key === "Enter" && noteText[seg.id]?.trim()) {
+                              setActionLoading(seg.id);
+                              try {
+                                await adminAddSeguimientoNote(password, seg.id, noteText[seg.id].trim());
+                                setNoteText((prev) => ({ ...prev, [seg.id]: "" }));
+                                await loadData();
+                              } catch (err) {
+                                console.error("Error adding note:", err);
+                              } finally {
+                                setActionLoading(null);
+                              }
+                            }
+                          }}
+                        />
+                        <button
+                          onClick={async () => {
+                            if (!noteText[seg.id]?.trim()) return;
+                            setActionLoading(seg.id);
+                            try {
+                              await adminAddSeguimientoNote(password, seg.id, noteText[seg.id].trim());
+                              setNoteText((prev) => ({ ...prev, [seg.id]: "" }));
+                              await loadData();
+                            } catch (err) {
+                              console.error("Error adding note:", err);
+                            } finally {
+                              setActionLoading(null);
+                            }
+                          }}
+                          disabled={!noteText[seg.id]?.trim() || actionLoading === seg.id}
+                          className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+                        >
+                          {actionLoading === seg.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        </button>
+                      </div>
+
+                      {seg.animalSlug && (
+                        <div>
+                          <a href={`/animales/${seg.animalSlug}`} target="_blank" rel="noopener noreferrer" className="text-primary no-underline hover:underline" style={{ fontSize: "0.8125rem" }}>
+                            Ver perfil de {seg.animalNombre} →
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )
       ) : (
@@ -619,7 +881,20 @@ export function AdminPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleToggleAdopted(animal.id)}
+                    onClick={() => {
+                      if (animal.adoptado) {
+                        // Un-marking: just toggle directly
+                        handleToggleAdopted(animal.id);
+                      } else {
+                        // Marking as adopted: check if there are inquiries for this animal
+                        const animalInquiries = inquiries.filter(inq => inq.animalId === animal.id);
+                        if (animalInquiries.length > 0) {
+                          setAdoptPickerAnimal(animal);
+                        } else {
+                          handleToggleAdopted(animal.id);
+                        }
+                      }
+                    }}
                     disabled={actionLoading === animal.id}
                     className={`p-2 rounded-lg transition-colors ${
                       animal.adoptado
@@ -670,6 +945,58 @@ export function AdminPage() {
           onClose={() => setEditItem(null)}
         />
       )}
+
+      {/* Adopt Picker Modal */}
+      {adoptPickerAnimal && (() => {
+        const animalInqs = inquiries.filter(inq => inq.animalId === adoptPickerAnimal.id);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => setAdoptPickerAnimal(null)}>
+            <div className="bg-background border border-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6 border-b border-border">
+                <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>
+                  Marcar a {adoptPickerAnimal.nombre} como adoptado
+                </h2>
+                <p className="text-muted-foreground mt-1" style={{ fontSize: "0.875rem" }}>
+                  Selecciona quien adopto a {adoptPickerAnimal.nombre} para crear el seguimiento:
+                </p>
+              </div>
+              <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
+                {animalInqs.map(inq => (
+                  <button
+                    key={inq.id}
+                    onClick={() => handleToggleAdopted(adoptPickerAnimal.id, inq.id)}
+                    disabled={actionLoading === adoptPickerAnimal.id}
+                    className="w-full text-left p-3 border border-border rounded-xl hover:border-primary hover:bg-secondary transition-colors"
+                  >
+                    <p style={{ fontWeight: 500, fontSize: "0.9375rem" }}>{inq.nombre}</p>
+                    <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
+                      {inq.email || inq.telefono || "Sin contacto"}
+                      {inq.tipoDocumento && inq.numeroDocumento && ` · ${inq.tipoDocumento} ${inq.numeroDocumento}`}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              <div className="p-4 border-t border-border flex gap-2">
+                <button
+                  onClick={() => handleToggleAdopted(adoptPickerAnimal.id)}
+                  disabled={actionLoading === adoptPickerAnimal.id}
+                  className="flex-1 px-4 py-2.5 border border-border rounded-xl hover:bg-muted transition-colors text-muted-foreground"
+                  style={{ fontSize: "0.875rem" }}
+                >
+                  Adoptar sin vincular solicitud
+                </button>
+                <button
+                  onClick={() => setAdoptPickerAnimal(null)}
+                  className="px-4 py-2.5 border border-border rounded-xl hover:bg-muted transition-colors"
+                  style={{ fontSize: "0.875rem" }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
