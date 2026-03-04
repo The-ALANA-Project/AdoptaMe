@@ -24,6 +24,7 @@ import {
   Facebook,
   FileText,
   ShieldCheck,
+  MapPin,
 } from "lucide-react";
 import {
   adminGetSubmissions,
@@ -591,6 +592,16 @@ export function AdminPage() {
                         <FileText className="w-4 h-4 text-muted-foreground" />
                         <span className="text-muted-foreground">{inq.tipoDocumento}:</span>
                         <span style={{ fontWeight: 500 }}>{inq.numeroDocumento}</span>
+                      </div>
+                    )}
+
+                    {/* Location */}
+                    {(inq.departamento || inq.provincia || inq.distrito) && (
+                      <div className="flex items-center gap-1.5" style={{ fontSize: "0.875rem" }}>
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        <span style={{ fontWeight: 500 }}>
+                          {[inq.distrito, inq.provincia, inq.departamento].filter(Boolean).join(", ")}
+                        </span>
                       </div>
                     )}
 

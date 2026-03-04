@@ -60,6 +60,9 @@ export interface Inquiry {
   telefono: string;
   tipoDocumento: string;
   numeroDocumento: string;
+  departamento?: string;
+  provincia?: string;
+  distrito?: string;
   linkedin: string;
   facebook: string;
   instagram: string;

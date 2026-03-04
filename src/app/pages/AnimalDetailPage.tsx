@@ -17,6 +17,7 @@ import {
   PawPrint,
   Linkedin,
   Facebook,
+  ChevronDown,
 } from "lucide-react";
 import { getAnimals, getAnimal, submitInquiry } from "../data/api";
 import type { Animal } from "../data/types";
@@ -116,6 +117,9 @@ export function AnimalDetailPage() {
     telefono: "",
     tipoDocumento: "",
     numeroDocumento: "",
+    departamento: "",
+    provincia: "",
+    distrito: "",
     linkedin: "",
     facebook: "",
     instagram: "",
@@ -234,6 +238,9 @@ export function AnimalDetailPage() {
         telefono: inquiry.telefono,
         tipoDocumento: inquiry.tipoDocumento,
         numeroDocumento: inquiry.numeroDocumento,
+        departamento: inquiry.departamento,
+        provincia: inquiry.provincia,
+        distrito: inquiry.distrito,
         linkedin: inquiry.linkedin,
         facebook: inquiry.facebook,
         instagram: inquiry.instagram,
@@ -281,6 +288,8 @@ export function AnimalDetailPage() {
 
   const inputClass =
     "w-full px-4 py-3 bg-input-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary";
+  const selectClass =
+    `${inputClass} pr-12 appearance-none cursor-pointer`;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
@@ -354,31 +363,23 @@ export function AnimalDetailPage() {
               </p>
               <p style={{ fontWeight: 500 }}>{animal.especie}</p>
             </div>
-            <div className="p-3 bg-muted/50 rounded-xl flex items-center gap-2">
-              {animal.vacunado ? (
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-              ) : (
-                <XCircle className="w-4 h-4 text-destructive" />
-              )}
-              <span style={{ fontSize: "0.875rem" }}>Vacunado</span>
-            </div>
-            <div className="p-3 bg-muted/50 rounded-xl flex items-center gap-2">
-              {animal.esterilizado ? (
-                <CheckCircle2 className="w-4 h-4 text-primary" />
-              ) : (
-                <XCircle className="w-4 h-4 text-destructive" />
-              )}
-              <span style={{ fontSize: "0.875rem" }}>Esterilizado</span>
-            </div>
+          </div>
+
+          {/* Health tags */}
+          <div className="flex gap-2 flex-wrap mb-6">
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${animal.vacunado ? 'bg-secondary text-primary' : 'bg-muted/50 text-muted-foreground'}`} style={{ fontSize: "0.75rem" }}>
+              {animal.vacunado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+              Vacunado
+            </span>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${animal.esterilizado ? 'bg-secondary text-primary' : 'bg-muted/50 text-muted-foreground'}`} style={{ fontSize: "0.75rem" }}>
+              {animal.esterilizado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+              Esterilizado
+            </span>
             {animal.desparasitado !== undefined && (
-              <div className="p-3 bg-muted/50 rounded-xl flex items-center gap-2 col-span-2">
-                {animal.desparasitado ? (
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                ) : (
-                  <XCircle className="w-4 h-4 text-destructive" />
-                )}
-                <span style={{ fontSize: "0.875rem" }}>Desparasitado</span>
-              </div>
+              <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full ${animal.desparasitado ? 'bg-secondary text-primary' : 'bg-muted/50 text-muted-foreground'}`} style={{ fontSize: "0.75rem" }}>
+                {animal.desparasitado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <XCircle className="w-3.5 h-3.5" />}
+                Desparasitado
+              </span>
             )}
           </div>
 
@@ -603,15 +604,18 @@ export function AnimalDetailPage() {
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
                         Tipo de documento
                       </label>
-                      <select
-                        value={inquiry.tipoDocumento}
-                        onChange={(e) => setInquiry((p) => ({ ...p, tipoDocumento: e.target.value }))}
-                        className={inputClass}
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="DNI">DNI</option>
-                        <option value="CE">CE (Carnet de Extranjeria)</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={inquiry.tipoDocumento}
+                          onChange={(e) => setInquiry((p) => ({ ...p, tipoDocumento: e.target.value }))}
+                          className={selectClass}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="DNI">DNI</option>
+                          <option value="CE">CE (Carnet de Extranjeria)</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      </div>
                     </div>
                     {inquiry.tipoDocumento && (
                       <div>
@@ -627,6 +631,42 @@ export function AnimalDetailPage() {
                         />
                       </div>
                     )}
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Departamento
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Lima"
+                        value={inquiry.departamento}
+                        onChange={(e) => setInquiry((p) => ({ ...p, departamento: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Provincia
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Lima"
+                        value={inquiry.provincia}
+                        onChange={(e) => setInquiry((p) => ({ ...p, provincia: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
+                        Distrito
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Lima"
+                        value={inquiry.distrito}
+                        onChange={(e) => setInquiry((p) => ({ ...p, distrito: e.target.value }))}
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -696,53 +736,62 @@ export function AnimalDetailPage() {
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
                         Tipo de vivienda
                       </label>
-                      <select
-                        value={inquiry.vivienda}
-                        onChange={(e) => setInquiry((p) => ({ ...p, vivienda: e.target.value }))}
-                        className={inputClass}
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="Casa propia">Casa propia</option>
-                        <option value="Casa alquilada">Casa alquilada</option>
-                        <option value="Departamento propio">Departamento propio</option>
-                        <option value="Departamento alquilado">Departamento alquilado</option>
-                        <option value="Otro">Otro</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={inquiry.vivienda}
+                          onChange={(e) => setInquiry((p) => ({ ...p, vivienda: e.target.value }))}
+                          className={selectClass}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Casa propia">Casa propia</option>
+                          <option value="Casa alquilada">Casa alquilada</option>
+                          <option value="Departamento propio">Departamento propio</option>
+                          <option value="Departamento alquilado">Departamento alquilado</option>
+                          <option value="Otro">Otro</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      </div>
                     </div>
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
                         Otras mascotas en casa
                       </label>
-                      <select
-                        value={inquiry.otrasMascotas}
-                        onChange={(e) => setInquiry((p) => ({ ...p, otrasMascotas: e.target.value }))}
-                        className={inputClass}
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="Ninguna">Ninguna</option>
-                        <option value="1 perro">1 perro</option>
-                        <option value="2+ perros">2+ perros</option>
-                        <option value="1 gato">1 gato</option>
-                        <option value="2+ gatos">2+ gatos</option>
-                        <option value="Perros y gatos">Perros y gatos</option>
-                        <option value="Otro tipo">Otro tipo de mascota</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={inquiry.otrasMascotas}
+                          onChange={(e) => setInquiry((p) => ({ ...p, otrasMascotas: e.target.value }))}
+                          className={selectClass}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Ninguna">Ninguna</option>
+                          <option value="1 perro">1 perro</option>
+                          <option value="2+ perros">2+ perros</option>
+                          <option value="1 gato">1 gato</option>
+                          <option value="2+ gatos">2+ gatos</option>
+                          <option value="Perros y gatos">Perros y gatos</option>
+                          <option value="Otro tipo">Otro tipo de mascota</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      </div>
                     </div>
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
                         Experiencia con mascotas
                       </label>
-                      <select
-                        value={inquiry.experiencia}
-                        onChange={(e) => setInquiry((p) => ({ ...p, experiencia: e.target.value }))}
-                        className={inputClass}
-                      >
-                        <option value="">Seleccionar...</option>
-                        <option value="Primera vez">Es mi primera mascota</option>
-                        <option value="He tenido antes">He tenido mascotas antes</option>
-                        <option value="Tengo actualmente">Tengo mascotas actualmente</option>
-                        <option value="Experiencia profesional">Experiencia profesional con animales</option>
-                      </select>
+                      <div className="relative">
+                        <select
+                          value={inquiry.experiencia}
+                          onChange={(e) => setInquiry((p) => ({ ...p, experiencia: e.target.value }))}
+                          className={selectClass}
+                        >
+                          <option value="">Seleccionar...</option>
+                          <option value="Primera vez">Es mi primera mascota</option>
+                          <option value="He tenido antes">He tenido mascotas antes</option>
+                          <option value="Tengo actualmente">Tengo mascotas actualmente</option>
+                          <option value="Experiencia profesional">Experiencia profesional con animales</option>
+                        </select>
+                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      </div>
                     </div>
                   </div>
                 </div>
