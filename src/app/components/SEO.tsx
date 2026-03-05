@@ -41,7 +41,7 @@ function setLink(rel: string, href: string, extra?: Record<string, string>) {
 
 export function SEO({
   title,
-  description = "Encuentra a tu companero ideal. Plataforma comunitaria de adopcion animal en Peru.",
+  description = "Encuentra a tu companero ideal. AdoptaMe es una plataforma comunitaria de adopcion animal en Peru donde puedes adoptar perros, gatos y mas.",
   path = "",
   image = OG_IMAGE,
 }: SEOProps) {
@@ -62,6 +62,8 @@ export function SEO({
     setMeta("name", "description", description);
     setMeta("name", "robots", "index, follow");
     setMeta("name", "theme-color", "#E2664A");
+    setMeta("name", "author", "AdoptaMe");
+    setMeta("property", "article:published_time", "2025-06-01T00:00:00Z");
 
     // Open Graph
     setMeta("property", "og:type", "website");

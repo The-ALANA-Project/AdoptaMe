@@ -226,7 +226,7 @@ const DEFAULT_OG_IMAGE =
   "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeihscx6ivorazotnxpzv3gaz2p3a3fdnbs2x6lss6vpp5kmfa3tdai/AdoptaMe%20Social%20Crawler.png";
 const SITE_TITLE = "AdoptaMe — Adopta un animal en Peru";
 const SITE_DESCRIPTION =
-  "Encuentra a tu companero ideal. Plataforma comunitaria de adopcion animal en Peru.";
+  "Encuentra a tu companero ideal. AdoptaMe es una plataforma comunitaria de adopcion animal en Peru donde puedes adoptar perros, gatos y mas.";
 
 function escapeHtml(str: string): string {
   return str
@@ -253,6 +253,8 @@ function buildOgHtml(opts: {
   <meta name="description" content="${escapeHtml(description)}" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#E2664A" />
+  <meta name="author" content="AdoptaMe" />
+  <meta property="article:published_time" content="2025-06-01T00:00:00Z" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="${escapeHtml(type)}" />
@@ -310,7 +312,7 @@ app.get("/make-server-ba60542a/og", async (c) => {
         buildOgHtml({
           title: "Animales en adopcion | AdoptaMe",
           description:
-            "Explora todos los animales disponibles para adopcion en Peru. Perros, gatos y mas esperan por un hogar.",
+            "Explora todos los animales disponibles para adopcion en Peru. Perros, gatos y mas esperan por un hogar. Encuentra a tu companero ideal en AdoptaMe.",
           image: DEFAULT_OG_IMAGE,
           url,
         })
@@ -323,7 +325,7 @@ app.get("/make-server-ba60542a/og", async (c) => {
         buildOgHtml({
           title: "Publicar un animal en adopcion | AdoptaMe",
           description:
-            "Tienes un animal rescatado que busca hogar? Envia su perfil a AdoptaMe para que lo vean miles de personas.",
+            "Tienes un animal rescatado que busca hogar? Envia su perfil a AdoptaMe para que lo vean miles de personas en Peru y encuentre una familia.",
           image: DEFAULT_OG_IMAGE,
           url,
         })
@@ -336,7 +338,7 @@ app.get("/make-server-ba60542a/og", async (c) => {
         buildOgHtml({
           title: "Sobre mi | AdoptaMe",
           description:
-            "Conoce la historia detras de AdoptaMe, una plataforma comunitaria de adopcion animal en Peru.",
+            "Conoce la historia detras de AdoptaMe, una plataforma comunitaria de adopcion animal en Peru creada para conectar rescatistas con familias adoptantes.",
           image: DEFAULT_OG_IMAGE,
           url,
         })
