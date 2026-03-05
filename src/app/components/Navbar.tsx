@@ -1,10 +1,23 @@
 import { Link, useLocation } from "react-router";
 import { Menu, X, HeartHandshake, Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   const location = useLocation();
+
+  // Close mobile menu on outside click
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [mobileOpen]);
 
   const links = [
     { to: "/", label: "Inicio" },
@@ -15,7 +28,7 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 bg-primary backdrop-blur-md border-b border-primary-foreground/10">
+    <nav ref={navRef} className="sticky top-0 z-50 bg-primary backdrop-blur-md border-b border-primary-foreground/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
