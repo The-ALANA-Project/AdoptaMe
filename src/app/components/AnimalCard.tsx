@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { MapPin, Calendar } from "lucide-react";
+import { MapPin, Calendar, AlertTriangle } from "lucide-react";
 import type { Animal } from "../data/types";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
@@ -38,6 +38,17 @@ export function AnimalCard({ animal }: { animal: Animal }) {
             {animal.especie}
           </span>
         </div>
+        {animal.urgente && !animal.adoptado && (
+          <div className="absolute top-3 right-3">
+            <span
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive text-primary-foreground backdrop-blur-sm animate-pulse"
+              style={{ fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.04em" }}
+            >
+              <AlertTriangle className="w-3 h-3" />
+              URGENTE
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Content */}

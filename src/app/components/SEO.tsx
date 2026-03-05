@@ -11,6 +11,7 @@ interface SEOProps {
   description?: string;
   path?: string;
   image?: string;
+  jsonLd?: object | object[];
 }
 
 function setMeta(attr: string, attrValue: string, content: string) {
@@ -44,6 +45,7 @@ export function SEO({
   description = "Encuentra a tu companero ideal. AdoptaMe es una plataforma comunitaria de adopcion animal en Peru donde puedes adoptar perros, gatos y mas.",
   path = "",
   image = OG_IMAGE,
+  jsonLd,
 }: SEOProps) {
   const fullTitle = title
     ? `${title} | AdoptaMe`
@@ -80,9 +82,29 @@ export function SEO({
     setMeta("name", "twitter:description", description);
     setMeta("name", "twitter:image", image);
 
+    // Geo meta tags for Peru
+    setMeta("name", "geo.region", "PE");
+    setMeta("name", "geo.placename", "Peru");
+    setMeta("name", "content-language", "es");
+
     // Canonical
     setLink("canonical", url);
-  }, [fullTitle, description, url, image]);
+
+    // JSON-LD structured data
+    const jsonLdId = "adoptame-jsonld";
+    let jsonLdEl = document.getElementById(jsonLdId) as HTMLScriptElement | null;
+    if (jsonLd) {
+      if (!jsonLdEl) {
+        jsonLdEl = document.createElement("script");
+        jsonLdEl.id = jsonLdId;
+        jsonLdEl.type = "application/ld+json";
+        document.head.appendChild(jsonLdEl);
+      }
+      jsonLdEl.textContent = JSON.stringify(jsonLd);
+    } else if (jsonLdEl) {
+      jsonLdEl.remove();
+    }
+  }, [fullTitle, description, url, image, jsonLd]);
 
   return null;
 }

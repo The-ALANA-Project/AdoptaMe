@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Search, SlidersHorizontal, X, Loader2, PawPrint } from "lucide-react";
+import { Search, SlidersHorizontal, X, Loader2, PawPrint, AlertTriangle } from "lucide-react";
 import { Link } from "react-router";
 import { getAnimals } from "../data/api";
 import type { Animal } from "../data/types";
@@ -14,6 +14,7 @@ export function BrowsePage() {
   const [tamano, setTamano] = useState("Todos");
   const [sexo, setSexo] = useState("Todos");
   const [showFilters, setShowFilters] = useState(false);
+  const [soloUrgentes, setSoloUrgentes] = useState(false);
 
   useEffect(() => {
     getAnimals()
@@ -36,17 +37,19 @@ export function BrowsePage() {
       const matchEspecie = especie === "Todos" || a.especie === especie;
       const matchTamano = tamano === "Todos" || a.tamano === tamano;
       const matchSexo = sexo === "Todos" || a.sexo === sexo;
-      return matchSearch && matchEspecie && matchTamano && matchSexo;
+      const matchUrgente = !soloUrgentes || a.urgente;
+      return matchSearch && matchEspecie && matchTamano && matchSexo && matchUrgente;
     });
-  }, [animals, search, especie, tamano, sexo]);
+  }, [animals, search, especie, tamano, sexo, soloUrgentes]);
 
-  const hasActiveFilters = especie !== "Todos" || tamano !== "Todos" || sexo !== "Todos";
+  const hasActiveFilters = especie !== "Todos" || tamano !== "Todos" || sexo !== "Todos" || soloUrgentes;
 
   const clearFilters = () => {
     setEspecie("Todos");
     setTamano("Todos");
     setSexo("Todos");
     setSearch("");
+    setSoloUrgentes(false);
   };
 
   const selectClass =
@@ -58,6 +61,21 @@ export function BrowsePage() {
         title="Animales en adopcion"
         description="Explora perros, gatos y otros animales rescatados disponibles para adopcion en Peru. Filtra por especie, tamano y sexo."
         path="/animales"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Animales en adopcion | AdoptaMe",
+          description: "Explora perros, gatos y otros animales rescatados disponibles para adopcion en Peru.",
+          url: "https://adoptame.pe/animales",
+          isPartOf: { "@type": "WebSite", name: "AdoptaMe", url: "https://adoptame.pe" },
+          breadcrumb: {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Inicio", item: "https://adoptame.pe" },
+              { "@type": "ListItem", position: 2, name: "Animales", item: "https://adoptame.pe/animales" },
+            ],
+          },
+        }}
       />
       {/* Header */}
       <div className="mb-8">
@@ -112,6 +130,19 @@ export function BrowsePage() {
             <option value="Macho">Macho</option>
             <option value="Hembra">Hembra</option>
           </select>
+
+          <button
+            onClick={() => setSoloUrgentes(!soloUrgentes)}
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border transition-colors cursor-pointer ${
+              soloUrgentes
+                ? "bg-destructive/10 text-destructive border-destructive/30"
+                : "bg-input-background text-muted-foreground border-border hover:text-foreground"
+            }`}
+            style={{ fontSize: "0.875rem", fontWeight: soloUrgentes ? 600 : 400 }}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            Solo urgentes
+          </button>
 
           {hasActiveFilters && (
             <button

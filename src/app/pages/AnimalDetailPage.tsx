@@ -18,6 +18,7 @@ import {
   Linkedin,
   Facebook,
   ChevronDown,
+  AlertTriangle,
 } from "lucide-react";
 import { getAnimals, getAnimal, submitInquiry, getRescuer } from "../data/api";
 import type { Animal, Rescuer } from "../data/types";
@@ -331,6 +332,36 @@ export function AnimalDetailPage() {
         description={`${animal.nombre} es un ${animal.especie.toLowerCase()} ${animal.raza.toLowerCase()}, ${animal.edad}, en ${animal.ubicacion}. ${animal.adoptado ? "Ya fue adoptado exitosamente." : "Conocelo y dale un hogar amoroso."} Adopcion responsable en Peru a traves de AdoptaMe.`}
         path={`/animales/${animal.slug || animal.id}`}
         image={animal.imagen}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: `${animal.nombre} busca hogar | AdoptaMe`,
+          description: animal.descripcion,
+          url: `https://adoptame.pe/animales/${animal.slug || animal.id}`,
+          mainEntity: {
+            "@type": "Thing",
+            name: animal.nombre,
+            description: animal.descripcion,
+            image: animal.imagen,
+            additionalType: "Animal",
+          },
+          ...(animal.adoptado ? {} : {
+            potentialAction: {
+              "@type": "Action",
+              name: `Adoptar a ${animal.nombre}`,
+              target: `https://adoptame.pe/animales/${animal.slug || animal.id}`,
+            },
+          }),
+          isPartOf: { "@type": "WebSite", name: "AdoptaMe", url: "https://adoptame.pe" },
+          breadcrumb: {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Inicio", item: "https://adoptame.pe" },
+              { "@type": "ListItem", position: 2, name: "Animales", item: "https://adoptame.pe/animales" },
+              { "@type": "ListItem", position: 3, name: animal.nombre, item: `https://adoptame.pe/animales/${animal.slug || animal.id}` },
+            ],
+          },
+        }}
       />
       <AnimalJsonLd animal={animal} />
       {/* Back */}
@@ -370,6 +401,12 @@ export function AnimalDetailPage() {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-primary border border-border rounded-full mt-2" style={{ fontSize: "0.8125rem", fontWeight: 500 }}>
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Adoptado exitosamente
+                </div>
+              )}
+              {animal.urgente && !animal.adoptado && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-destructive/10 text-destructive border border-destructive/20 rounded-full mt-2 animate-pulse" style={{ fontSize: "0.8125rem", fontWeight: 600 }}>
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  Caso urgente — necesita hogar inmediatamente
                 </div>
               )}
             </div>

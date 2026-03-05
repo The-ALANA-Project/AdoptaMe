@@ -7,7 +7,7 @@ export function PrivacidadPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
       <SEO
         title="Politica de Privacidad"
-        description="Conoce como AdoptaMe protege tu informacion personal. No creamos cuentas, no usamos cookies de rastreo."
+        description="Conoce como AdoptaMe protege tu informacion personal y como usamos cookies de analitica con tu consentimiento."
         path="/privacidad"
       />
       <Link
@@ -23,7 +23,7 @@ export function PrivacidadPage() {
         Politica de Privacidad
       </h1>
       <p className="text-muted-foreground mb-10" style={{ fontSize: "0.875rem" }}>
-        Ultima actualizacion: 4 de marzo de 2026
+        Ultima actualizacion: 5 de marzo de 2026
       </p>
 
       <div className="space-y-8 text-foreground" style={{ fontSize: "0.9375rem", lineHeight: 1.8 }}>
@@ -124,7 +124,14 @@ export function PrivacidadPage() {
             </li>
           </ul>
           <p className="text-muted-foreground mt-3">
-            No utilizamos servicios de analitica, publicidad ni redes de seguimiento de terceros.
+            Adicionalmente, utilizamos <strong className="text-foreground">Google Analytics</strong> para
+            comprender como se usa la plataforma (paginas visitadas, duracion de visitas, pais de origen).
+            Google Analytics utiliza cookies para recopilar esta informacion de forma anonima. Solo se
+            activa si aceptas las cookies a traves del banner de consentimiento. Para mas informacion,
+            consulta la{" "}
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 no-underline">
+              politica de privacidad de Google
+            </a>.
           </p>
         </section>
 
@@ -145,10 +152,25 @@ export function PrivacidadPage() {
           <h2 className="mb-3" style={{ fontSize: "1.25rem", fontWeight: 600 }}>
             6. Cookies y rastreo
           </h2>
+          <p className="text-muted-foreground mb-3">
+            AdoptaMe utiliza <strong className="text-foreground">Google Analytics</strong> para entender
+            como los visitantes usan la plataforma. Google Analytics emplea cookies para recopilar
+            informacion anonima sobre las paginas visitadas, el tiempo de navegacion y el pais de
+            origen. Esta informacion nos ayuda a mejorar la experiencia de uso.
+          </p>
+          <p className="text-muted-foreground mb-3">
+            Las cookies de Google Analytics <strong className="text-foreground">solo se activan si
+            das tu consentimiento</strong> a traves del banner que aparece al visitar la plataforma
+            por primera vez. Si rechazas las cookies, no se instalara ningun rastreador y tu navegacion
+            no sera monitoreada.
+          </p>
+          <p className="text-muted-foreground mb-3">
+            Puedes cambiar tu preferencia en cualquier momento eliminando los datos del sitio en la
+            configuracion de tu navegador, lo que mostrara nuevamente el banner de consentimiento.
+          </p>
           <p className="text-muted-foreground">
-            AdoptaMe no utiliza cookies de rastreo, publicidad ni analitica de terceros. No realizamos
-            seguimiento de tu comportamiento ni creamos perfiles de navegacion. No recopilamos
-            direcciones IP ni datos de navegacion con fines de identificacion.
+            No utilizamos cookies de publicidad ni creamos perfiles de navegacion con fines comerciales.
+            No recopilamos direcciones IP con fines de identificacion personal.
           </p>
         </section>
 

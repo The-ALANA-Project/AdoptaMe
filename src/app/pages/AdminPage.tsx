@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   MapPin,
   UserPlus,
+  AlertTriangle,
 } from "lucide-react";
 import {
   adminGetSubmissions,
@@ -493,6 +494,12 @@ export function AdminPage() {
                     <div>
                       <p style={{ fontWeight: 500 }}>
                         {sub.nombre}{" "}
+                        {sub.urgente && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-destructive/10 text-destructive rounded text-xs ml-1 animate-pulse" style={{ fontWeight: 600 }}>
+                            <AlertTriangle className="w-3 h-3" />
+                            URGENTE
+                          </span>
+                        )}
                         <span className="text-muted-foreground" style={{ fontWeight: 400, fontSize: "0.875rem" }}>
                           — {sub.especie} · {sub.ubicacion}
                         </span>
@@ -1116,6 +1123,12 @@ export function AdminPage() {
                       {animal.adoptado && (
                         <span className="px-2 py-0.5 bg-secondary text-primary rounded text-xs ml-1" style={{ fontWeight: 500 }}>
                           Adoptado
+                        </span>
+                      )}
+                      {animal.urgente && !animal.adoptado && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-destructive/10 text-destructive rounded text-xs ml-1" style={{ fontWeight: 600 }}>
+                          <AlertTriangle className="w-3 h-3" />
+                          URGENTE
                         </span>
                       )}
                       <span className="text-muted-foreground" style={{ fontWeight: 400, fontSize: "0.875rem" }}>

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router";
-import { Heart, Search, Users, ShieldCheck, ArrowRight, PawPrint, Loader2, MessageCircle, Home, Send } from "lucide-react";
+import { Heart, Search, Users, ShieldCheck, ArrowRight, PawPrint, Loader2, MessageCircle, Home, Send, AlertTriangle } from "lucide-react";
 import { getAnimals } from "../data/api";
 import type { Animal } from "../data/types";
 import { AnimalCard } from "../components/AnimalCard";
@@ -33,11 +33,18 @@ export function HomePage() {
   const featured = animals.slice(0, 6);
 
   // 3 random non-adopted animals for the mid-page showcase
-  const randomAvailable = useMemo(() => {
+  // Urgent animals get priority, then fill remaining slots with random available
+  const showcaseAnimals = useMemo(() => {
     const available = animals.filter((a) => !a.adoptado && a.imagen);
-    const shuffled = [...available].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    const urgent = available.filter((a) => a.urgente);
+    const nonUrgent = available.filter((a) => !a.urgente);
+    const shuffledNonUrgent = [...nonUrgent].sort(() => Math.random() - 0.5);
+    // Show all urgent first, then fill up to 3 total with random non-urgent
+    const result = [...urgent, ...shuffledNonUrgent].slice(0, 3);
+    return result;
   }, [animals]);
+
+  const hasUrgent = showcaseAnimals.some((a) => a.urgente);
 
   return (
     <div>
@@ -45,6 +52,30 @@ export function HomePage() {
         title="Inicio"
         description="Encuentra a tu companero ideal. Plataforma comunitaria de adopcion animal en Peru. Perros y gatos rescatados buscan un hogar."
         path="/"
+        jsonLd={[
+          {
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "AdoptaMe",
+            url: "https://adoptame.pe",
+            logo: "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeihscx6ivorazotnxpzv3gaz2p3a3fdnbs2x6lss6vpp5kmfa3tdai/AdoptaMe%20Social%20Crawler.png",
+            description: "Plataforma comunitaria de adopcion animal en Peru",
+            areaServed: { "@type": "Country", name: "Peru" },
+          },
+          {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "AdoptaMe",
+            url: "https://adoptame.pe",
+            description: "Encuentra a tu companero ideal. Plataforma comunitaria de adopcion animal en Peru.",
+            inLanguage: "es",
+            potentialAction: {
+              "@type": "SearchAction",
+              target: { "@type": "EntryPoint", urlTemplate: "https://adoptame.pe/animales?q={search_term_string}" },
+              "query-input": "required name=search_term_string",
+            },
+          },
+        ]}
       />
       {/* Hero */}
       <section className="relative overflow-hidden">
@@ -258,17 +289,37 @@ export function HomePage() {
       </section>
 
       {/* Mid-page showcase: random available animals */}
-      {!loading && randomAvailable.length > 0 && (
+      {!loading && showcaseAnimals.length > 0 && (
         <section className="bg-secondary/40 px-[0px] py-[60px]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-10">
               <div>
-                <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 600 }}>
-                  Conoce a algunos de ellos
-                </h2>
-                <p className="text-muted-foreground mt-1" style={{ fontSize: "1.0625rem" }}>
-                  Animales que buscan un hogar ahora mismo
-                </p>
+                {hasUrgent ? (
+                  <>
+                    <div
+                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-destructive/10 text-destructive border border-destructive/20 rounded-full mb-3 animate-pulse"
+                      style={{ fontSize: "0.75rem", fontWeight: 600 }}
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      Casos urgentes
+                    </div>
+                    <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 600 }}>
+                      Necesitan un hogar urgente
+                    </h2>
+                    <p className="text-muted-foreground mt-1" style={{ fontSize: "1.0625rem" }}>
+                      Estos animales estan en situacion critica y necesitan ser adoptados lo antes posible
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 600 }}>
+                      Conoce a algunos de ellos
+                    </h2>
+                    <p className="text-muted-foreground mt-1" style={{ fontSize: "1.0625rem" }}>
+                      Animales que buscan un hogar ahora mismo
+                    </p>
+                  </>
+                )}
               </div>
               <Link
                 to="/animales"
@@ -280,7 +331,7 @@ export function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {randomAvailable.map((animal) => (
+              {showcaseAnimals.map((animal) => (
                 <AnimalCard key={animal.id} animal={animal} />
               ))}
             </div>

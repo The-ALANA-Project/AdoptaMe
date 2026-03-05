@@ -20,14 +20,20 @@ export default async function handler(request: Request) {
   const ua = (request.headers.get("user-agent") || "").toLowerCase();
   const isCrawler = CRAWLER_USER_AGENTS.some((bot) => ua.includes(bot));
 
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  // Let robots.txt and sitemap.xml pass through directly (served by Netlify static/redirect)
+  if (path === "/robots.txt" || path === "/sitemap.xml") {
+    return;
+  }
+
   if (!isCrawler) {
     // Not a crawler — let Netlify serve the SPA normally
     return;
   }
 
   // It's a crawler — proxy to the Supabase /og endpoint
-  const url = new URL(request.url);
-  const path = url.pathname;
   const ogUrl = `${OG_ENDPOINT}?path=${encodeURIComponent(path)}`;
 
   try {

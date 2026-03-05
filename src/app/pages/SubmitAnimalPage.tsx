@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Upload, PawPrint, CheckCircle2, Loader2, ImagePlus, X } from "lucide-react";
+import { Upload, PawPrint, CheckCircle2, Loader2, ImagePlus, X, AlertTriangle } from "lucide-react";
 import { Link } from "react-router";
 import { submitAnimal, uploadImage } from "../data/api";
 import { SEO } from "../components/SEO";
@@ -25,6 +25,7 @@ export function SubmitAnimalPage() {
     vacunado: false,
     esterilizado: false,
     desparasitado: false,
+    urgente: false,
     contactoNombre: "",
     contactoEmail: "",
     contactoWhatsapp: "",
@@ -119,6 +120,7 @@ export function SubmitAnimalPage() {
                 vacunado: false,
                 esterilizado: false,
                 desparasitado: false,
+                urgente: false,
                 contactoNombre: "",
                 contactoEmail: "",
                 contactoWhatsapp: "",
@@ -373,6 +375,27 @@ export function SubmitAnimalPage() {
               Desparasitado
             </label>
           </div>
+        </div>
+
+        {/* Urgent checkbox */}
+        <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-xl">
+          <label className="flex items-start gap-3 cursor-pointer" style={{ fontWeight: 400 }}>
+            <input
+              type="checkbox"
+              className="w-4 h-4 mt-0.5 accent-[var(--destructive)] shrink-0"
+              checked={form.urgente}
+              onChange={(e) => update("urgente", e.target.checked)}
+            />
+            <div>
+              <span className="text-destructive flex items-center gap-1.5" style={{ fontSize: "0.9375rem", fontWeight: 600 }}>
+                <AlertTriangle className="w-4 h-4" />
+                Este animal necesita hogar con urgencia
+              </span>
+              <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8125rem", lineHeight: 1.5 }}>
+                Marca esta casilla si el animal esta en peligro o necesita ser adoptado de forma inmediata. Se mostrara con prioridad en la pagina de inicio.
+              </p>
+            </div>
+          </label>
         </div>
 
         {/* Section: Contact */}

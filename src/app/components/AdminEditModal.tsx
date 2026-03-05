@@ -16,6 +16,7 @@ interface EditableFields {
   vacunado: boolean;
   esterilizado: boolean;
   desparasitado: boolean;
+  urgente: boolean;
   contactoNombre: string;
   contactoEmail: string;
   contactoWhatsapp: string;
@@ -53,6 +54,7 @@ export function AdminEditModal({ item, type, onSave, onClose, rescuers = [] }: A
     vacunado: !!item.vacunado,
     esterilizado: !!item.esterilizado,
     desparasitado: !!item.desparasitado,
+    urgente: !!item.urgente,
     contactoNombre: item.contactoNombre || "",
     contactoEmail: item.contactoEmail || "",
     contactoWhatsapp: item.contactoWhatsapp || "",
@@ -327,6 +329,26 @@ export function AdminEditModal({ item, type, onSave, onClose, rescuers = [] }: A
                 </label>
               ))}
             </div>
+          </div>
+
+          {/* Urgente toggle */}
+          <div className="p-3 bg-destructive/5 border border-destructive/20 rounded-xl">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={form.urgente}
+                onChange={(e) => handleChange("urgente", e.target.checked)}
+                className="w-4 h-4 rounded border-border text-destructive accent-[var(--destructive)]"
+              />
+              <div>
+                <span style={{ fontSize: "0.875rem", fontWeight: 600 }} className="text-destructive">
+                  Caso urgente
+                </span>
+                <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>
+                  Marca si este animal necesita hogar con urgencia. Se mostrara con prioridad en la pagina de inicio.
+                </p>
+              </div>
+            </label>
           </div>
 
           {/* Contact info */}

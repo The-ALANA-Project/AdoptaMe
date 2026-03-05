@@ -24,6 +24,7 @@ export interface Animal {
   rescuerId?: string;
   fechaPublicacion: string;
   adoptado?: boolean;
+  urgente?: boolean;
 }
 
 export interface Submission {
@@ -48,6 +49,7 @@ export interface Submission {
   contactoFacebook?: string;
   contactoTiktok?: string;
   contactoWeb?: string;
+  urgente?: boolean;
   fechaEnvio: string;
   estado: string;
 }

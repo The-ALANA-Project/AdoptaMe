@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { SEO } from "./SEO";
+import { CookieConsent } from "./CookieConsent";
 
 export function Layout() {
   const { pathname } = useLocation();
@@ -19,6 +20,7 @@ export function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <CookieConsent />
     </div>
   );
 }

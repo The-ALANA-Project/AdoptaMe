@@ -243,8 +243,12 @@ function buildOgHtml(opts: {
   image: string;
   url: string;
   type?: string;
+  jsonLd?: object;
 }) {
-  const { title, description, image, url, type = "website" } = opts;
+  const { title, description, image, url, type = "website", jsonLd } = opts;
+  const jsonLdTag = jsonLd
+    ? `\n  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`
+    : "";
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -254,7 +258,9 @@ function buildOgHtml(opts: {
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#E2664A" />
   <meta name="author" content="AdoptaMe" />
-  <meta property="article:published_time" content="2025-06-01T00:00:00Z" />
+  <meta name="geo.region" content="PE" />
+  <meta name="geo.placename" content="Peru" />
+  <meta name="content-language" content="es" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="${escapeHtml(type)}" />
@@ -274,7 +280,7 @@ function buildOgHtml(opts: {
   <meta name="twitter:image" content="${escapeHtml(image)}" />
 
   <link rel="canonical" href="${escapeHtml(url)}" />
-  <meta http-equiv="refresh" content="0;url=${escapeHtml(url)}" />
+  <meta http-equiv="refresh" content="0;url=${escapeHtml(url)}" />${jsonLdTag}
 </head>
 <body>
   <p>Redirigiendo a <a href="${escapeHtml(url)}">${escapeHtml(title)}</a>...</p>
@@ -282,7 +288,18 @@ function buildOgHtml(opts: {
 </html>`;
 }
 
-// GET /og?path=/animales/pelusa  — returns crawler-friendly HTML with OG tags
+// Organization JSON-LD (shared)
+const ORG_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "AdoptaMe",
+  url: SITE_URL,
+  logo: DEFAULT_OG_IMAGE,
+  description: SITE_DESCRIPTION,
+  areaServed: { "@type": "Country", name: "Peru" },
+};
+
+// GET /og?path=/animales/pelusa  — returns crawler-friendly HTML with OG tags + JSON-LD
 app.get("/make-server-ba60542a/og", async (c) => {
   try {
     const path = c.req.query("path") || "/";
@@ -292,7 +309,6 @@ app.get("/make-server-ba60542a/og", async (c) => {
     const animalMatch = path.match(/^\/animales\/([^/]+)$/);
     if (animalMatch) {
       const slug = decodeURIComponent(animalMatch[1]);
-      // Try direct ID lookup, then slug lookup
       let animal = await kv.get(`animal:${slug}`);
       if (!animal) {
         const all = await kv.getByPrefix("animal:");
@@ -308,12 +324,59 @@ app.get("/make-server-ba60542a/og", async (c) => {
         ].filter(Boolean).join(", ");
         const description = `${descParts}. ${animal.adoptado ? "Ya fue adoptado exitosamente." : "Conocelo y dale un hogar amoroso."} Adopcion responsable en Peru a traves de AdoptaMe.`;
         const image = animal.imagen || DEFAULT_OG_IMAGE;
-        return c.html(buildOgHtml({ title, description, image, url }));
+
+        const animalJsonLd = {
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: title,
+          description,
+          url,
+          mainEntity: {
+            "@type": "Thing",
+            name: animal.nombre,
+            description: animal.descripcion,
+            image: image,
+            additionalType: "Animal",
+          },
+          ...(animal.adoptado ? {} : {
+            potentialAction: {
+              "@type": "Action",
+              name: `Adoptar a ${animal.nombre}`,
+              target: url,
+            },
+          }),
+          isPartOf: { "@type": "WebSite", name: "AdoptaMe", url: SITE_URL },
+          breadcrumb: {
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+              { "@type": "ListItem", position: 2, name: "Animales", item: `${SITE_URL}/animales` },
+              { "@type": "ListItem", position: 3, name: animal.nombre, item: url },
+            ],
+          },
+        };
+
+        return c.html(buildOgHtml({ title, description, image, url, jsonLd: animalJsonLd }));
       }
     }
 
     // Browse page
     if (path === "/animales") {
+      const browseJsonLd = {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "Animales en adopcion",
+        description: "Explora todos los animales disponibles para adopcion en Peru.",
+        url,
+        isPartOf: { "@type": "WebSite", name: "AdoptaMe", url: SITE_URL },
+        breadcrumb: {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Inicio", item: SITE_URL },
+            { "@type": "ListItem", position: 2, name: "Animales", item: url },
+          ],
+        },
+      };
       return c.html(
         buildOgHtml({
           title: "Animales en adopcion | AdoptaMe",
@@ -321,6 +384,7 @@ app.get("/make-server-ba60542a/og", async (c) => {
             "Explora todos los animales disponibles para adopcion en Peru. Perros, gatos y mas esperan por un hogar. Encuentra a tu companero ideal en AdoptaMe.",
           image: DEFAULT_OG_IMAGE,
           url,
+          jsonLd: browseJsonLd,
         })
       );
     }
@@ -351,18 +415,34 @@ app.get("/make-server-ba60542a/og", async (c) => {
       );
     }
 
-    // Default: homepage or any other page
+    // Default: homepage — includes Organization + WebSite with SearchAction
+    const homeJsonLd = [
+      ORG_JSON_LD,
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "AdoptaMe",
+        url: SITE_URL,
+        description: SITE_DESCRIPTION,
+        inLanguage: "es",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/animales?q={search_term_string}` },
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ];
     return c.html(
       buildOgHtml({
         title: SITE_TITLE,
         description: SITE_DESCRIPTION,
         image: DEFAULT_OG_IMAGE,
         url,
+        jsonLd: homeJsonLd,
       })
     );
   } catch (err) {
     console.log(`Error generating OG HTML: ${err}`);
-    // Fallback to default OG even on error
     return c.html(
       buildOgHtml({
         title: SITE_TITLE,
@@ -371,6 +451,60 @@ app.get("/make-server-ba60542a/og", async (c) => {
         url: SITE_URL,
       })
     );
+  }
+});
+
+// GET /sitemap — dynamic XML sitemap for search engines
+app.get("/make-server-ba60542a/sitemap", async (c) => {
+  try {
+    const animals = await kv.getByPrefix("animal:");
+    const now = new Date().toISOString().split("T")[0];
+
+    const staticPages = [
+      { loc: "/", changefreq: "daily", priority: "1.0" },
+      { loc: "/animales", changefreq: "daily", priority: "0.9" },
+      { loc: "/enviar", changefreq: "monthly", priority: "0.7" },
+      { loc: "/sobre-mi", changefreq: "monthly", priority: "0.5" },
+      { loc: "/terminos", changefreq: "yearly", priority: "0.3" },
+      { loc: "/privacidad", changefreq: "yearly", priority: "0.3" },
+    ];
+
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+    for (const page of staticPages) {
+      xml += `  <url>\n`;
+      xml += `    <loc>${SITE_URL}${page.loc}</loc>\n`;
+      xml += `    <lastmod>${now}</lastmod>\n`;
+      xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+      xml += `    <priority>${page.priority}</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    for (const animal of animals) {
+      if (!animal.slug) continue;
+      const lastmod = animal.fechaPublicacion
+        ? animal.fechaPublicacion.split("T")[0]
+        : now;
+      xml += `  <url>\n`;
+      xml += `    <loc>${SITE_URL}/animales/${animal.slug}</loc>\n`;
+      xml += `    <lastmod>${lastmod}</lastmod>\n`;
+      xml += `    <changefreq>weekly</changefreq>\n`;
+      xml += `    <priority>0.8</priority>\n`;
+      xml += `  </url>\n`;
+    }
+
+    xml += `</urlset>`;
+
+    return new Response(xml, {
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=3600, s-maxage=3600",
+      },
+    });
+  } catch (err) {
+    console.log(`Error generating sitemap: ${err}`);
+    return c.json({ error: `Error generating sitemap: ${err}` }, 500);
   }
 });
 
@@ -447,6 +581,7 @@ app.post("/make-server-ba60542a/submissions", async (c) => {
       vacunado: !!vacunado,
       esterilizado: !!esterilizado,
       desparasitado: !!desparasitado,
+      urgente: !!body.urgente,
       contactoNombre,
       contactoEmail: contactoEmail || "",
       contactoWhatsapp: contactoWhatsapp || "",
@@ -479,6 +614,7 @@ app.post("/make-server-ba60542a/submissions", async (c) => {
         <li><strong>Vacunado:</strong> ${vacunado ? "Si" : "No"}</li>
         <li><strong>Esterilizado:</strong> ${esterilizado ? "Si" : "No"}</li>
         <li><strong>Desparasitado:</strong> ${desparasitado ? "Si" : "No"}</li>
+        <li><strong>Urgente:</strong> ${body.urgente ? "Si" : "No"}</li>
       </ul>
       <h3>Contacto del rescatista</h3>
       <ul>
@@ -712,6 +848,7 @@ app.post("/make-server-ba60542a/admin/approve/:id", async (c) => {
       vacunado: submission.vacunado,
       esterilizado: submission.esterilizado,
       desparasitado: submission.desparasitado,
+      urgente: !!submission.urgente,
       contactoNombre: submission.contactoNombre,
       contactoEmail: submission.contactoEmail,
       contactoWhatsapp: submission.contactoWhatsapp,
