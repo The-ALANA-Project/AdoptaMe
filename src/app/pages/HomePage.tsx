@@ -335,7 +335,7 @@ export function HomePage() {
                 <AnimalCard key={animal.id} animal={animal} />
               ))}
             </div>
-            <div className="mt-8 text-center sm:hidden">
+            <div className="mt-8 text-left sm:hidden">
               <Link
                 to="/animales"
                 className="inline-flex items-center gap-1 text-primary no-underline"
