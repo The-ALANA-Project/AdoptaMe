@@ -14,6 +14,8 @@ import {
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { SEO } from "../components/SEO";
+import { getRescuers } from "../data/api";
+import type { Rescuer } from "../data/types";
 
 const HERO_IMG =
   "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeifjzhjkr7pkjbywne2cemthav3plevi4xofd3esmdbwd2pod7g2du/Zeus.png";
@@ -64,6 +66,18 @@ export function SobreMiPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+
+  // Dynamic rescuer profile (Braelia)
+  const [braelia, setBraelia] = useState<Rescuer | null>(null);
+
+  useEffect(() => {
+    getRescuers()
+      .then((rescuers: Rescuer[]) => {
+        const b = rescuers.find((r: Rescuer) => r.nombre === "Braelia Garcia Chuquihuanga");
+        if (b) setBraelia(b);
+      })
+      .catch(() => { /* fallback to hardcoded */ });
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -381,7 +395,7 @@ export function SobreMiPage() {
                   <div className="flex flex-col sm:flex-row gap-5 items-start">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-primary/20">
                       <ImageWithFallback
-                        src={BRAELIA_IMG}
+                        src={braelia?.foto || BRAELIA_IMG}
                         alt="Braelia Garcia Chuquihuanga"
                         className="w-full h-full object-cover"
                       />
@@ -391,7 +405,7 @@ export function SobreMiPage() {
                         className="text-foreground mb-1"
                         style={{ fontSize: "1.0625rem", fontWeight: 600 }}
                       >
-                        Braelia Garcia Chuquihuanga
+                        {braelia?.nombre || "Braelia Garcia Chuquihuanga"}
                       </h4>
                       <p
                         className="text-primary mb-3"
@@ -403,42 +417,58 @@ export function SobreMiPage() {
                         className="text-muted-foreground mb-4"
                         style={{ fontSize: "0.875rem", lineHeight: 1.6 }}
                       >
-                        Braelia rescata, rehabilita y busca hogares para perritos en situacion
-                        de calle. Su dedicacion y amor por los animales fue lo que le dio vida
-                        a AdoptaMe.
+                        {braelia?.bio || "Braelia rescata, rehabilita y busca hogares para perritos en situacion de calle. Su dedicacion y amor por los animales fue lo que le dio vida a AdoptaMe."}
                       </p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <a
-                          href="https://www.facebook.com/braelia.garciachuquihuanga"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
-                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                        >
-                          <Facebook className="w-3.5 h-3.5" />
-                          Facebook
-                        </a>
-                        <a
-                          href="https://www.instagram.com/braeliagarcia/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
-                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                        >
-                          <Instagram className="w-3.5 h-3.5" />
-                          Instagram
-                        </a>
-                        <a
-                          href="https://www.tiktok.com/@brae1974"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
-                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                        >
-                          <TikTokIcon className="w-3.5 h-3.5" />
-                          TikTok
-                        </a>
+                        {(braelia?.facebook || "braelia.garciachuquihuanga") && (
+                          <a
+                            href={`https://www.facebook.com/${braelia?.facebook || "braelia.garciachuquihuanga"}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                            style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                          >
+                            <Facebook className="w-3.5 h-3.5" />
+                            Facebook
+                          </a>
+                        )}
+                        {(braelia?.instagram || "braeliagarcia") && (
+                          <a
+                            href={`https://www.instagram.com/${braelia?.instagram || "braeliagarcia"}/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                            style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                          >
+                            <Instagram className="w-3.5 h-3.5" />
+                            Instagram
+                          </a>
+                        )}
+                        {(braelia?.tiktok || "brae1974") && (
+                          <a
+                            href={`https://www.tiktok.com/@${braelia?.tiktok || "brae1974"}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                            style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                          >
+                            <TikTokIcon className="w-3.5 h-3.5" />
+                            TikTok
+                          </a>
+                        )}
                       </div>
+                      {(braelia?.donacion || "https://www.paypal.me/misrescataditos") && (
+                        <a
+                          href={braelia?.donacion || "https://www.paypal.me/misrescataditos"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity no-underline"
+                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                        >
+                          <Heart className="w-4 h-4" />
+                          Apoyar a Braelia
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -473,6 +503,49 @@ export function SobreMiPage() {
                   animales que mas lo necesitan.
                 </p>
               </div>
+            </div>
+
+            {/* ===== Apoya a AdoptaMe ===== */}
+            <div
+              className="mb-16 p-8 rounded-3xl border border-primary/20"
+              style={{
+                background: "linear-gradient(135deg, #FEF2ED 0%, #FFFAF7 100%)",
+              }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                
+                <h3
+                  className="text-foreground"
+                  style={{ fontSize: "1.25rem", fontWeight: 600 }}
+                >
+                  Apoya a AdoptaMe
+                </h3>
+              </div>
+              <p
+                className="text-muted-foreground mb-4"
+                style={{ fontSize: "0.9375rem", lineHeight: 1.7 }}
+              >
+                Mantener esta plataforma tiene costos reales: el dominio adoptame.pe, hosting,
+                servicios de backend, almacenamiento de imagenes, envio de correos, y muchas horas
+                de desarrollo y administracion. Si AdoptaMe te parece util y quieres que siga
+                creciendo, cualquier aporte ayuda enormemente.
+              </p>
+              <a
+                href="https://ko-fi.com/stellaachenbach"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity no-underline"
+                style={{ fontSize: "0.9375rem", fontWeight: 500 }}
+              >
+                <Heart className="w-4 h-4" />
+                Invitame un cafe en Ko-fi
+              </a>
+              <p
+                className="text-muted-foreground mt-3"
+                style={{ fontSize: "0.75rem", lineHeight: 1.5 }}
+              >
+                100% de los aportes se destinan a mantener y mejorar la plataforma.
+              </p>
             </div>
 
             {/* ===== Contact form ===== */}

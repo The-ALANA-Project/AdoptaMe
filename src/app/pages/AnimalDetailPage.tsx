@@ -19,8 +19,8 @@ import {
   Facebook,
   ChevronDown,
 } from "lucide-react";
-import { getAnimals, getAnimal, submitInquiry } from "../data/api";
-import type { Animal } from "../data/types";
+import { getAnimals, getAnimal, submitInquiry, getRescuer } from "../data/api";
+import type { Animal, Rescuer } from "../data/types";
 import { AnimalCard } from "../components/AnimalCard";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { SEO } from "../components/SEO";
@@ -100,6 +100,7 @@ export function AnimalDetailPage() {
   const [related, setRelated] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [rescuer, setRescuer] = useState<Rescuer | null>(null);
 
   // Share menu
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -159,6 +160,13 @@ export function AnimalDetailPage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (!animal?.rescuerId) { setRescuer(null); return; }
+    getRescuer(animal.rescuerId)
+      .then((data) => setRescuer(data))
+      .catch(() => setRescuer(null));
+  }, [animal]);
 
   // Close share menu on outside click
   useEffect(() => {
@@ -414,31 +422,95 @@ export function AnimalDetailPage() {
           </div>
 
           {/* Rescuer / caretaker profile */}
-          {animal.contactoNombre && (
+          {(rescuer || animal.contactoNombre) && (
             <div className="mb-6 p-4 bg-primary/5 border border-primary/10 rounded-xl">
               <p className="text-muted-foreground mb-2" style={{ fontSize: "0.75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Bajo el cuidado de
               </p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-primary" />
-                </div>
-                <div className="min-w-0">
-                  <p style={{ fontWeight: 500 }}>{animal.contactoNombre}</p>
-                  {animal.contactoInstagram && (
+              {rescuer ? (
+                <>
+                  <div className="flex items-center gap-3 mb-3">
+                    {rescuer.foto ? (
+                      <img src={rescuer.foto} alt={rescuer.nombre} className="w-12 h-12 rounded-full object-cover border-2 border-primary/20 flex-shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="w-6 h-6 text-primary" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p style={{ fontWeight: 600 }}>{rescuer.nombre}</p>
+                      <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>Rescatista independiente</p>
+                    </div>
+                  </div>
+                  {rescuer.bio && (
+                    <p className="text-muted-foreground mb-3" style={{ fontSize: "0.8125rem", lineHeight: 1.6 }}>{rescuer.bio}</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {rescuer.facebook && (
+                      <a href={`https://www.facebook.com/${rescuer.facebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                        <Facebook className="w-3.5 h-3.5" />
+                        Facebook
+                      </a>
+                    )}
+                    {rescuer.instagram && (
+                      <a href={`https://www.instagram.com/${rescuer.instagram}/`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                        <Instagram className="w-3.5 h-3.5" />
+                        @{rescuer.instagram}
+                      </a>
+                    )}
+                    {rescuer.tiktok && (
+                      <a href={`https://www.tiktok.com/@${rescuer.tiktok}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-muted-foreground hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.73a8.19 8.19 0 004.76 1.52V6.8a4.84 4.84 0 01-1-.11z"/></svg>
+                        @{rescuer.tiktok}
+                      </a>
+                    )}
+                    {rescuer.web && (
+                      <a href={rescuer.web.startsWith("http") ? rescuer.web : `https://${rescuer.web}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                        Web
+                      </a>
+                    )}
+                  </div>
+                  {rescuer.donacion && (
                     <a
-                      href={`https://www.instagram.com/${animal.contactoInstagram.replace("@", "")}/`}
+                      href={rescuer.donacion}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors no-underline"
-                      style={{ fontSize: "0.875rem" }}
+                      className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity no-underline"
+                      style={{ fontSize: "0.8125rem", fontWeight: 500 }}
                     >
-                      <Instagram className="w-3.5 h-3.5" />
-                      @{animal.contactoInstagram.replace("@", "")}
+                      <Heart className="w-4 h-4" />
+                      Apoyar a {rescuer.nombre.split(" ")[0]}
                     </a>
                   )}
+                </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                    <User className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p style={{ fontWeight: 500 }}>{animal.contactoNombre}</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {animal.contactoInstagram && (
+                        <a href={`https://www.instagram.com/${animal.contactoInstagram.replace("@", "")}/`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors no-underline" style={{ fontSize: "0.875rem" }}>
+                          <Instagram className="w-3.5 h-3.5" />@{animal.contactoInstagram.replace("@", "")}
+                        </a>
+                      )}
+                      {animal.contactoFacebook && (
+                        <a href={`https://www.facebook.com/${animal.contactoFacebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors no-underline" style={{ fontSize: "0.875rem" }}>
+                          <Facebook className="w-3.5 h-3.5" />Facebook
+                        </a>
+                      )}
+                      {animal.contactoTiktok && (
+                        <a href={`https://www.tiktok.com/@${animal.contactoTiktok.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors no-underline" style={{ fontSize: "0.875rem" }}>
+                          TikTok
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

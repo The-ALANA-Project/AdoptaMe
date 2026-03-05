@@ -682,6 +682,13 @@ app.post("/make-server-ba60542a/admin/approve/:id", async (c) => {
     const submission = await kv.get(`submission:${subId}`);
     if (!submission) return c.json({ error: "Envio no encontrado" }, 404);
 
+    // Optionally receive rescuerId from body
+    let rescuerId = "";
+    try {
+      const body = await c.req.json();
+      if (body?.rescuerId) rescuerId = body.rescuerId;
+    } catch { /* no body is fine */ }
+
     const animalId = await nextId("animal");
     const animal = {
       id: animalId,
@@ -708,6 +715,7 @@ app.post("/make-server-ba60542a/admin/approve/:id", async (c) => {
       fechaPublicacion: new Date().toISOString(),
       slug: await generateUniqueSlug(submission.nombre),
       adoptado: false,
+      ...(rescuerId ? { rescuerId } : {}),
     };
 
     await kv.set(`animal:${animalId}`, animal);
@@ -1173,6 +1181,146 @@ app.post("/make-server-ba60542a/admin/seguimientos/:id/notes", async (c) => {
   } catch (err) {
     console.log(`Error adding seguimiento note: ${err}`);
     return c.json({ error: `Error al agregar nota: ${err}` }, 500);
+  }
+});
+
+// =============================================
+// RESCUER PROFILES
+// =============================================
+
+// GET /rescuers — public: list all rescuer profiles
+app.get("/make-server-ba60542a/rescuers", async (c) => {
+  try {
+    const rescuers = await kv.getByPrefix("rescuer:");
+    rescuers.sort((a: any, b: any) =>
+      new Date(b.fechaCreacion).getTime() - new Date(a.fechaCreacion).getTime()
+    );
+    return c.json({ rescuers });
+  } catch (err) {
+    console.log(`Error fetching rescuers: ${err}`);
+    return c.json({ error: `Error fetching rescuers: ${err}` }, 500);
+  }
+});
+
+// GET /rescuers/:id — public: get a single rescuer profile
+app.get("/make-server-ba60542a/rescuers/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const rescuer = await kv.get(`rescuer:${id}`);
+    if (!rescuer) return c.json({ error: "Rescatista no encontrado" }, 404);
+    return c.json({ rescuer });
+  } catch (err) {
+    console.log(`Error fetching rescuer: ${err}`);
+    return c.json({ error: `Error fetching rescuer: ${err}` }, 500);
+  }
+});
+
+// POST /admin/rescuers — create a new rescuer profile
+app.post("/make-server-ba60542a/admin/rescuers", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const body = await c.req.json();
+    const { nombre, foto, bio, facebook, instagram, tiktok, web, email, whatsapp, donacion } = body;
+    if (!nombre) return c.json({ error: "El nombre es requerido" }, 400);
+
+    const id = await nextId("rescuer");
+    const rescuer = {
+      id,
+      nombre,
+      foto: foto || "",
+      bio: bio || "",
+      facebook: facebook || "",
+      instagram: instagram || "",
+      tiktok: tiktok || "",
+      web: web || "",
+      email: email || "",
+      whatsapp: whatsapp || "",
+      donacion: donacion || "",
+      fechaCreacion: new Date().toISOString(),
+    };
+    await kv.set(`rescuer:${id}`, rescuer);
+    return c.json({ message: "Rescatista creado", rescuer });
+  } catch (err) {
+    console.log(`Error creating rescuer: ${err}`);
+    return c.json({ error: `Error al crear rescatista: ${err}` }, 500);
+  }
+});
+
+// PUT /admin/rescuers/:id — update a rescuer profile
+app.put("/make-server-ba60542a/admin/rescuers/:id", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const id = c.req.param("id");
+    const existing = await kv.get(`rescuer:${id}`);
+    if (!existing) return c.json({ error: "Rescatista no encontrado" }, 404);
+
+    const updates = await c.req.json();
+    const updated = { ...existing, ...updates, id: existing.id, fechaCreacion: existing.fechaCreacion };
+    await kv.set(`rescuer:${id}`, updated);
+    return c.json({ message: "Rescatista actualizado", rescuer: updated });
+  } catch (err) {
+    console.log(`Error updating rescuer: ${err}`);
+    return c.json({ error: `Error al actualizar rescatista: ${err}` }, 500);
+  }
+});
+
+// DELETE /admin/rescuers/:id — delete a rescuer profile
+app.delete("/make-server-ba60542a/admin/rescuers/:id", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const id = c.req.param("id");
+    const existing = await kv.get(`rescuer:${id}`);
+    if (!existing) return c.json({ error: "Rescatista no encontrado" }, 404);
+    await kv.del(`rescuer:${id}`);
+    return c.json({ message: "Rescatista eliminado" });
+  } catch (err) {
+    console.log(`Error deleting rescuer: ${err}`);
+    return c.json({ error: `Error al eliminar rescatista: ${err}` }, 500);
+  }
+});
+
+// POST /admin/rescuers/seed-braelia — seed Braelia as the first rescuer (idempotent)
+app.post("/make-server-ba60542a/admin/rescuers/seed-braelia", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const existing = await kv.getByPrefix("rescuer:");
+    const braelia = existing.find((r: any) => r.nombre === "Braelia Garcia Chuquihuanga");
+    if (braelia) {
+      return c.json({ message: "Braelia ya existe como rescatista", rescuer: braelia, seeded: false });
+    }
+
+    const id = await nextId("rescuer");
+    const rescuer = {
+      id,
+      nombre: "Braelia Garcia Chuquihuanga",
+      foto: "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafkreibzgyqu6lcgrgtnok667fu67fp7ml3j6qufujteo27haw444iutl4",
+      bio: "Braelia rescata, rehabilita y busca hogares para perritos en situacion de calle. Su dedicacion y amor por los animales fue lo que le dio vida a AdoptaMe.",
+      facebook: "braelia.garciachuquihuanga",
+      instagram: "braeliagarcia",
+      tiktok: "brae1974",
+      web: "",
+      email: "",
+      whatsapp: "",
+      donacion: "https://www.paypal.me/misrescataditos",
+      fechaCreacion: new Date().toISOString(),
+    };
+    await kv.set(`rescuer:${id}`, rescuer);
+
+    // Also link all existing animals with contactoNombre matching Braelia
+    const animals = await kv.getByPrefix("animal:");
+    let linked = 0;
+    for (const animal of animals) {
+      if (animal.contactoNombre === "Braelia Garcia Chuquihuanga" && !animal.rescuerId) {
+        animal.rescuerId = id;
+        await kv.set(`animal:${animal.id}`, animal);
+        linked++;
+      }
+    }
+
+    return c.json({ message: `Braelia creada y vinculada a ${linked} animales`, rescuer, seeded: true });
+  } catch (err) {
+    console.log(`Error seeding Braelia: ${err}`);
+    return c.json({ error: `Error al crear rescatista: ${err}` }, 500);
   }
 });
 

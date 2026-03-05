@@ -21,6 +21,7 @@ export interface Animal {
   contactoTiktok?: string;
   contactoWeb?: string;
   contactoSobreTi?: string;
+  rescuerId?: string;
   fechaPublicacion: string;
   adoptado?: boolean;
 }
@@ -94,4 +95,19 @@ export interface Seguimiento {
   inquiryId: string;
   fechaAdopcion: string;
   notas: SeguimientoNote[];
+}
+
+export interface Rescuer {
+  id: string;
+  nombre: string;
+  foto: string;
+  bio: string;
+  facebook: string;
+  instagram: string;
+  tiktok: string;
+  web: string;
+  email: string;
+  whatsapp: string;
+  donacion: string;
+  fechaCreacion: string;
 }

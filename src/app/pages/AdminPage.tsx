@@ -25,6 +25,7 @@ import {
   FileText,
   ShieldCheck,
   MapPin,
+  UserPlus,
 } from "lucide-react";
 import {
   adminGetSubmissions,
@@ -41,8 +42,13 @@ import {
   adminUpdateAnimal,
   adminGetSeguimientos,
   adminAddSeguimientoNote,
+  adminGetRescuers,
+  adminCreateRescuer,
+  adminUpdateRescuer,
+  adminDeleteRescuer,
+  adminSeedBraelia,
 } from "../data/api";
-import type { Animal, Submission, Inquiry, Seguimiento } from "../data/types";
+import type { Animal, Submission, Inquiry, Seguimiento, Rescuer } from "../data/types";
 import { AdminEditModal } from "../components/AdminEditModal";
 
 export function AdminPage() {
@@ -50,11 +56,12 @@ export function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  const [tab, setTab] = useState<"submissions" | "animals" | "inquiries" | "seguimiento">("animals");
+  const [tab, setTab] = useState<"submissions" | "animals" | "inquiries" | "seguimiento" | "rescuers">("animals");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [seguimientos, setSeguimientos] = useState<Seguimiento[]>([]);
+  const [rescuers, setRescuers] = useState<Rescuer[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -63,6 +70,10 @@ export function AdminPage() {
   const [editItem, setEditItem] = useState<{ item: any; type: "submission" | "animal" } | null>(null);
   const [adoptPickerAnimal, setAdoptPickerAnimal] = useState<Animal | null>(null);
   const [noteText, setNoteText] = useState<Record<string, string>>({});
+  const [rescuerForm, setRescuerForm] = useState<Partial<Rescuer> | null>(null);
+  const [editingRescuer, setEditingRescuer] = useState<Rescuer | null>(null);
+  const [pendingRescuerIds, setPendingRescuerIds] = useState<Record<string, string>>({});
+  const [pendingRescuerFromSub, setPendingRescuerFromSub] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -96,6 +107,12 @@ export function AdminPage() {
           setSeedMsg(`Error al crear seed: ${seedErr.message}`);
         }
       }
+
+      // Load rescuers
+      try {
+        const resc = await adminGetRescuers(password);
+        setRescuers(resc);
+      } catch { /* rescuers table may be empty */ }
     } catch (err: any) {
       console.error("Error loading admin data:", err);
       if (err.message?.includes("No autorizado")) {
@@ -125,7 +142,8 @@ export function AdminPage() {
   const handleApprove = async (id: string) => {
     setActionLoading(id);
     try {
-      await adminApprove(password, id);
+      const rescuerId = pendingRescuerIds[id] || "";
+      await adminApprove(password, id, rescuerId);
       await loadData();
     } catch (err) {
       console.error("Error approving:", err);
@@ -239,6 +257,53 @@ export function AdminPage() {
       await loadData();
     } catch (err) {
       console.error("Error updating animal:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCreateRescuer = async () => {
+    if (!rescuerForm) return;
+    setActionLoading("rescuer");
+    try {
+      const result = await adminCreateRescuer(password, rescuerForm);
+      await loadData();
+      // If created from a pending submission, auto-select the new rescuer
+      if (pendingRescuerFromSub && result?.rescuer?.id) {
+        setPendingRescuerIds((prev) => ({ ...prev, [pendingRescuerFromSub]: result.rescuer.id }));
+      }
+      setPendingRescuerFromSub(null);
+      setRescuerForm(null);
+    } catch (err) {
+      console.error("Error creating rescuer:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUpdateRescuer = async () => {
+    if (!editingRescuer || !rescuerForm) return;
+    setActionLoading("rescuer");
+    try {
+      await adminUpdateRescuer(password, editingRescuer.id, rescuerForm);
+      await loadData();
+      setEditingRescuer(null);
+      setRescuerForm(null);
+    } catch (err) {
+      console.error("Error updating rescuer:", err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeleteRescuer = async (id: string) => {
+    if (!confirm("Estas seguro de eliminar este rescatador?")) return;
+    setActionLoading(id);
+    try {
+      await adminDeleteRescuer(password, id);
+      await loadData();
+    } catch (err) {
+      console.error("Error deleting rescuer:", err);
     } finally {
       setActionLoading(null);
     }
@@ -385,6 +450,17 @@ export function AdminPage() {
         >
           Seguimiento ({seguimientos.length})
         </button>
+        <button
+          onClick={() => setTab("rescuers")}
+          className={`px-5 py-2.5 rounded-lg transition-colors ${
+            tab === "rescuers"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={{ fontSize: "0.875rem", fontWeight: 500 }}
+        >
+          Rescatistas ({rescuers.length})
+        </button>
       </div>
 
       {loading ? (
@@ -515,6 +591,60 @@ export function AdminPage() {
                         )}
                       </div>
                     )}
+
+                    {/* Rescuer assignment before approval */}
+                    <div className="p-3 bg-primary/5 border border-primary/10 rounded-xl">
+                      <label className="block text-muted-foreground mb-1.5" style={{ fontSize: "0.75rem", fontWeight: 500 }}>
+                        Vincular perfil de rescatista al aprobar
+                      </label>
+                      {rescuers.length > 0 ? (
+                        <select
+                          value={pendingRescuerIds[sub.id] || ""}
+                          onChange={(e) => setPendingRescuerIds((prev) => ({ ...prev, [sub.id]: e.target.value }))}
+                          className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          style={{ fontSize: "0.875rem" }}
+                        >
+                          <option value="">— Sin vincular —</option>
+                          {rescuers.map((r) => (
+                            <option key={r.id} value={r.id}>
+                              {r.nombre}{r.instagram ? ` (@${r.instagram})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
+                          No hay rescatistas registrados aun
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPendingRescuerFromSub(sub.id);
+                            setEditingRescuer(null);
+                            setRescuerForm({
+                              nombre: sub.contactoNombre || "",
+                              foto: "",
+                              bio: sub.contactoSobreTi || "",
+                              facebook: sub.contactoFacebook || "",
+                              instagram: sub.contactoInstagram || "",
+                              tiktok: sub.contactoTiktok || "",
+                              web: sub.contactoWeb || "",
+                              email: sub.contactoEmail || "",
+                              whatsapp: sub.contactoWhatsapp || "",
+                            });
+                          }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                        >
+                          <UserPlus className="w-3.5 h-3.5" />
+                          Crear rescatista desde este contacto
+                        </button>
+                        <p className="text-muted-foreground flex-1" style={{ fontSize: "0.6875rem" }}>
+                          Se pre-llenara con los datos de {sub.contactoNombre}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -846,6 +976,106 @@ export function AdminPage() {
             })}
           </div>
         )
+      ) : tab === "rescuers" ? (
+        /* ===== Rescuers tab ===== */
+        <div className="space-y-6">
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={async () => { setActionLoading("seedBraelia"); try { const res = await adminSeedBraelia(password); setSeedMsg(res.message); await loadData(); } catch (err: any) { setSeedMsg(`Error: ${err.message}`); } finally { setActionLoading(null); } }}
+              disabled={actionLoading === "seedBraelia"}
+              className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-xl hover:bg-primary/5 transition-colors"
+              style={{ fontSize: "0.875rem" }}
+            >
+              {actionLoading === "seedBraelia" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+              Seed Braelia
+            </button>
+            <button
+              onClick={() => { setEditingRescuer(null); setRescuerForm({ nombre: "", foto: "", bio: "", facebook: "", instagram: "", tiktok: "", web: "", email: "", whatsapp: "", donacion: "" }); }}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
+              style={{ fontSize: "0.875rem" }}
+            >
+              <User className="w-4 h-4" />
+              Nuevo rescatista
+            </button>
+          </div>
+
+          {rescuers.length === 0 ? (
+            <div className="text-center py-16 bg-card border border-border rounded-2xl">
+              <User className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="mb-1">No hay rescatistas registrados</h3>
+              <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
+                Usa "Seed Braelia" para crear el primer perfil
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {rescuers.map((r) => {
+                const linkedAnimals = animals.filter(a => a.rescuerId === r.id);
+                return (
+                  <div key={r.id} className="bg-card border border-border rounded-xl overflow-hidden hover:border-primary transition-colors">
+                    <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+                      <div className="flex items-center gap-4">
+                        {r.foto ? (
+                          <img src={r.foto} alt={r.nombre} className="w-12 h-12 rounded-full object-cover border-2 border-primary/20" />
+                        ) : (
+                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center"><User className="w-6 h-6 text-primary" /></div>
+                        )}
+                        <div>
+                          <p style={{ fontWeight: 500 }}>{r.nombre}{linkedAnimals.length > 0 && <span className="text-muted-foreground ml-2" style={{ fontWeight: 400, fontSize: "0.8125rem" }}>· {linkedAnimals.length} animal{linkedAnimals.length > 1 ? "es" : ""}</span>}</p>
+                          <div className="flex items-center gap-2 text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
+                            {r.instagram && <span>@{r.instagram}</span>}
+                            {r.facebook && <span>· FB</span>}
+                            {r.tiktok && <span>· TikTok</span>}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {actionLoading === r.id ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : (
+                          <>
+                            <button onClick={(e) => { e.stopPropagation(); setEditingRescuer({ ...r }); setRescuerForm({ ...r }); }} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Editar"><Pencil className="w-4 h-4" /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDeleteRescuer(r.id); }} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors" title="Eliminar"><Trash2 className="w-4 h-4" /></button>
+                          </>
+                        )}
+                        {expandedId === r.id ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                      </div>
+                    </div>
+                    {expandedId === r.id && (
+                      <div className="px-4 pb-4 border-t border-border pt-4 space-y-3">
+                        {r.bio && <div><span className="text-muted-foreground block mb-1" style={{ fontSize: "0.75rem" }}>Bio</span><p style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>{r.bio}</p></div>}
+                        <div className="flex flex-wrap gap-3" style={{ fontSize: "0.8125rem" }}>
+                          {r.facebook && <a href={`https://www.facebook.com/${r.facebook}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Facebook className="w-3.5 h-3.5" />{r.facebook}</a>}
+                          {r.instagram && <a href={`https://www.instagram.com/${r.instagram}/`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Instagram className="w-3.5 h-3.5" />@{r.instagram}</a>}
+                          {r.tiktok && <a href={`https://www.tiktok.com/@${r.tiktok}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-muted-foreground rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80">TikTok: @{r.tiktok}</a>}
+                          {r.web && <a href={r.web.startsWith("http") ? r.web : `https://${r.web}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-primary/5 text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Globe className="w-3.5 h-3.5" />{r.web}</a>}
+                        </div>
+                        {(r.email || r.whatsapp) && (
+                          <div className="flex flex-wrap gap-4" style={{ fontSize: "0.875rem" }}>
+                            {r.email && <a href={`mailto:${r.email}`} className="flex items-center gap-1.5 text-primary no-underline hover:underline"><Mail className="w-4 h-4" />{r.email}</a>}
+                            {r.whatsapp && <a href={`https://wa.me/${r.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline"><Phone className="w-4 h-4" />{r.whatsapp}</a>}
+                          </div>
+                        )}
+                        {linkedAnimals.length > 0 && (
+                          <div>
+                            <span className="text-muted-foreground block mb-2" style={{ fontSize: "0.75rem" }}>Animales vinculados</span>
+                            <div className="flex flex-wrap gap-2">
+                              {linkedAnimals.map(a => (
+                                <a key={a.id} href={`/animales/${a.slug || a.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-secondary text-foreground rounded-lg no-underline hover:border-primary border border-border transition-colors" style={{ fontSize: "0.8125rem" }}>
+                                  {a.imagen && <img src={a.imagen} alt={a.nombre} className="w-5 h-5 rounded object-cover" />}
+                                  {a.nombre}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <p className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>ID: {r.id} · Creado: {new Date(r.fechaCreacion).toLocaleDateString("es-PE")}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       ) : (
         /* ===== Animals tab ===== */
         animals.length === 0 ? (
@@ -945,6 +1175,7 @@ export function AdminPage() {
         <AdminEditModal
           item={editItem.item}
           type={editItem.type}
+          rescuers={rescuers}
           onSave={async (updates) => {
             if (editItem.type === "submission") {
               await handleUpdateSubmission(editItem.item.id, updates);
@@ -1008,6 +1239,53 @@ export function AdminPage() {
           </div>
         );
       })()}
+
+      {/* Rescuer Form Modal */}
+      {rescuerForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => { setRescuerForm(null); setEditingRescuer(null); setPendingRescuerFromSub(null); }}>
+          <div className="bg-background border border-border rounded-2xl w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-border">
+              <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>{editingRescuer ? "Editar rescatista" : pendingRescuerFromSub ? "Nuevo rescatista (desde envio)" : "Nuevo rescatista"}</h2>
+              <p className="text-muted-foreground mt-1" style={{ fontSize: "0.875rem" }}>{editingRescuer ? "Actualiza la informacion del perfil" : pendingRescuerFromSub ? "Revisa y ajusta los datos pre-llenados del contacto" : "Agrega un nuevo perfil de rescatista"}</p>
+            </div>
+            <div className="p-6 space-y-4">
+              {[
+                { key: "nombre", label: "Nombre completo *", type: "text" },
+                { key: "foto", label: "URL de foto de perfil", type: "text", placeholder: "https://..." },
+                { key: "bio", label: "Bio / descripcion", type: "textarea" },
+                { key: "facebook", label: "Facebook (usuario)", type: "text", placeholder: "braelia.garciachuquihuanga" },
+                { key: "instagram", label: "Instagram (usuario)", type: "text", placeholder: "braeliagarcia" },
+                { key: "tiktok", label: "TikTok (usuario)", type: "text", placeholder: "brae1974" },
+                { key: "web", label: "Sitio web", type: "text", placeholder: "https://..." },
+                { key: "email", label: "Email de contacto", type: "email" },
+                { key: "whatsapp", label: "WhatsApp", type: "text", placeholder: "+51..." },
+                { key: "donacion", label: "Enlace de donacion", type: "text", placeholder: "https://www.paypal.me/... o https://ko-fi.com/..." },
+              ].map(({ key, label, type, placeholder }) => (
+                <div key={key}>
+                  <label className="block mb-1.5" style={{ fontSize: "0.875rem", fontWeight: 500 }}>{label}</label>
+                  {type === "textarea" ? (
+                    <textarea rows={3} value={(rescuerForm as any)[key] || ""} onChange={(e) => setRescuerForm(prev => ({ ...prev, [key]: e.target.value }))} placeholder={placeholder} className="w-full px-4 py-3 bg-input-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none" style={{ fontSize: "0.875rem" }} />
+                  ) : (
+                    <input type={type} value={(rescuerForm as any)[key] || ""} onChange={(e) => setRescuerForm(prev => ({ ...prev, [key]: e.target.value }))} placeholder={placeholder} className="w-full px-4 py-3 bg-input-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" style={{ fontSize: "0.875rem" }} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-border flex gap-2">
+              <button
+                onClick={editingRescuer ? handleUpdateRescuer : handleCreateRescuer}
+                disabled={actionLoading === "rescuer" || !rescuerForm.nombre?.trim()}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity disabled:opacity-40"
+                style={{ fontSize: "0.875rem", fontWeight: 500 }}
+              >
+                {actionLoading === "rescuer" ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {editingRescuer ? "Guardar cambios" : "Crear rescatista"}
+              </button>
+              <button onClick={() => { setRescuerForm(null); setEditingRescuer(null); setPendingRescuerFromSub(null); }} className="px-4 py-2.5 border border-border rounded-xl hover:bg-muted transition-colors" style={{ fontSize: "0.875rem" }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

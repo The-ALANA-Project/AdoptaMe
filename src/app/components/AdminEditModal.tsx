@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { X, Upload, Loader2, ImageIcon } from "lucide-react";
 import { uploadImage } from "../data/api";
+import type { Rescuer } from "../data/types";
 
 interface EditableFields {
   nombre: string;
@@ -23,6 +24,7 @@ interface EditableFields {
   contactoTiktok: string;
   contactoWeb: string;
   contactoSobreTi: string;
+  rescuerId: string;
 }
 
 interface AdminEditModalProps {
@@ -30,13 +32,14 @@ interface AdminEditModalProps {
   type: "submission" | "animal";
   onSave: (updates: Partial<EditableFields>) => Promise<void>;
   onClose: () => void;
+  rescuers?: Rescuer[];
 }
 
 const ESPECIE_OPTIONS = ["Perro", "Gato", "Conejo", "Ave", "Otro"];
 const SEXO_OPTIONS = ["Macho", "Hembra"];
 const TAMANO_OPTIONS = ["Pequeno", "Mediano", "Grande"];
 
-export function AdminEditModal({ item, type, onSave, onClose }: AdminEditModalProps) {
+export function AdminEditModal({ item, type, onSave, onClose, rescuers = [] }: AdminEditModalProps) {
   const [form, setForm] = useState<EditableFields>({
     nombre: item.nombre || "",
     especie: item.especie || "Perro",
@@ -58,6 +61,7 @@ export function AdminEditModal({ item, type, onSave, onClose }: AdminEditModalPr
     contactoTiktok: item.contactoTiktok || "",
     contactoWeb: item.contactoWeb || "",
     contactoSobreTi: item.contactoSobreTi || "",
+    rescuerId: item.rescuerId || "",
   });
 
   const [saving, setSaving] = useState(false);
@@ -330,6 +334,32 @@ export function AdminEditModal({ item, type, onSave, onClose }: AdminEditModalPr
             <p className="text-muted-foreground mb-3" style={{ fontSize: "0.75rem", fontWeight: 500 }}>
               Informacion de contacto
             </p>
+
+            {/* Rescuer profile link (only for animals) */}
+            {type === "animal" && rescuers.length > 0 && (
+              <div className="mb-4 p-3 bg-primary/5 border border-primary/10 rounded-xl">
+                <label className={labelClass} style={labelStyle}>
+                  Vincular perfil de rescatista
+                </label>
+                <select
+                  value={form.rescuerId}
+                  onChange={(e) => handleChange("rescuerId", e.target.value)}
+                  className={inputClass}
+                  style={{ fontSize: "0.875rem" }}
+                >
+                  <option value="">— Sin vincular —</option>
+                  {rescuers.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.nombre}{r.instagram ? ` (@${r.instagram})` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-muted-foreground mt-1.5" style={{ fontSize: "0.75rem" }}>
+                  Al vincular, el perfil del rescatista aparecera en la pagina del animal con foto y redes sociales.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelClass} style={labelStyle}>

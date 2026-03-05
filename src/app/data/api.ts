@@ -134,10 +134,11 @@ export async function adminSeedPending(password: string) {
   });
 }
 
-export async function adminApprove(password: string, id: string) {
+export async function adminApprove(password: string, id: string, rescuerId?: string) {
   return request(`/admin/approve/${id}`, {
     method: "POST",
-    headers: adminHeaders(password),
+    headers: { ...adminHeaders(password), "Content-Type": "application/json" },
+    body: JSON.stringify({ rescuerId: rescuerId || "" }),
   });
 }
 
@@ -191,5 +192,54 @@ export async function adminAddSeguimientoNote(password: string, id: string, text
     method: "POST",
     headers: adminHeaders(password),
     body: JSON.stringify({ texto }),
+  });
+}
+
+// --- Rescuer Profiles (public) ---
+export async function getRescuers() {
+  const data = await request("/rescuers");
+  return data.rescuers || [];
+}
+
+export async function getRescuer(id: string) {
+  const data = await request(`/rescuers/${id}`);
+  return data.rescuer;
+}
+
+// --- Rescuer Profiles (admin) ---
+export async function adminGetRescuers(password: string) {
+  const data = await request("/rescuers", {
+    headers: adminHeaders(password),
+  });
+  return data.rescuers || [];
+}
+
+export async function adminCreateRescuer(password: string, rescuer: Record<string, any>) {
+  return request("/admin/rescuers", {
+    method: "POST",
+    headers: adminHeaders(password),
+    body: JSON.stringify(rescuer),
+  });
+}
+
+export async function adminUpdateRescuer(password: string, id: string, updates: Record<string, any>) {
+  return request(`/admin/rescuers/${id}`, {
+    method: "PUT",
+    headers: adminHeaders(password),
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function adminDeleteRescuer(password: string, id: string) {
+  return request(`/admin/rescuers/${id}`, {
+    method: "DELETE",
+    headers: adminHeaders(password),
+  });
+}
+
+export async function adminSeedBraelia(password: string) {
+  return request("/admin/rescuers/seed-braelia", {
+    method: "POST",
+    headers: adminHeaders(password),
   });
 }
