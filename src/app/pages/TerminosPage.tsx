@@ -7,7 +7,7 @@ export function TerminosPage() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
       <SEO
         title="Terminos de Uso"
-        description="Terminos y condiciones de uso de AdoptaMe, plataforma comunitaria de adopcion animal en Peru."
+        description="Lee los terminos y condiciones de uso de AdoptaMe, la plataforma comunitaria de adopcion animal en Peru. Conoce tus derechos y responsabilidades."
         path="/terminos"
       />
       <Link

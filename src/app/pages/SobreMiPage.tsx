@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
   Heart,
-  PawPrint,
   ArrowDown,
   Send,
   Loader2,
   CheckCircle2,
   Instagram,
   Facebook,
-  ExternalLink,
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
@@ -21,7 +19,7 @@ const HERO_IMG =
   "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeifjzhjkr7pkjbywne2cemthav3plevi4xofd3esmdbwd2pod7g2du/Zeus.png";
 
 const BRAELIA_IMG =
-  "https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/633276317_4277925302352897_4541785310514846509_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=LWwJrFLt_gAQ7kNvwETEFHF&_nc_oc=AdlLdM_Yz9YQ3ssnXxNp3SgbAP3Qmz5Lajjqg9zCIrSag193a5fI5BgVlsCi-kpX4uw&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=98TNn6JaqPi65GHpkNJgag&_nc_ss=8&oh=00_Afx7ZqSIU_h06t7BrLZ0snuHMarSWg35Lq1pp8ZXjCGa7Q&oe=69AF5B52";
+  "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafkreibzgyqu6lcgrgtnok667fu67fp7ml3j6qufujteo27haw444iutl4";
 
 function TikTokIcon({ className }: { className?: string }) {
   return (

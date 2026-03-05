@@ -328,7 +328,7 @@ export function AnimalDetailPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-10">
       <SEO
         title={`${animal.nombre} busca hogar`}
-        description={`${animal.nombre} es un ${animal.especie.toLowerCase()} ${animal.raza.toLowerCase()}, ${animal.edad}, en ${animal.ubicacion}. Conocelo y dale un hogar.`}
+        description={`${animal.nombre} es un ${animal.especie.toLowerCase()} ${animal.raza.toLowerCase()}, ${animal.edad}, en ${animal.ubicacion}. ${animal.adoptado ? "Ya fue adoptado exitosamente." : "Conocelo y dale un hogar amoroso."} Adopcion responsable en Peru a traves de AdoptaMe.`}
         path={`/animales/${animal.slug || animal.id}`}
         image={animal.imagen}
       />

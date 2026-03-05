@@ -300,7 +300,13 @@ app.get("/make-server-ba60542a/og", async (c) => {
       }
       if (animal) {
         const title = `${animal.nombre} busca hogar | AdoptaMe`;
-        const description = `${animal.nombre} es un ${(animal.especie || "").toLowerCase()} ${(animal.raza || "").toLowerCase()}, ${animal.edad}, en ${animal.ubicacion}. Conocelo y dale un hogar.`;
+        const descParts = [
+          `${animal.nombre} es un ${(animal.especie || "").toLowerCase()} ${(animal.raza || "").toLowerCase()}`,
+          animal.sexo ? animal.sexo.toLowerCase() : "",
+          animal.edad,
+          `en ${animal.ubicacion}`,
+        ].filter(Boolean).join(", ");
+        const description = `${descParts}. ${animal.adoptado ? "Ya fue adoptado exitosamente." : "Conocelo y dale un hogar amoroso."} Adopcion responsable en Peru a traves de AdoptaMe.`;
         const image = animal.imagen || DEFAULT_OG_IMAGE;
         return c.html(buildOgHtml({ title, description, image, url }));
       }

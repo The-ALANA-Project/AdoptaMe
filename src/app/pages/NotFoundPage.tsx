@@ -7,7 +7,7 @@ export function NotFoundPage() {
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
       <SEO
         title="Pagina no encontrada"
-        description="La pagina que buscas no existe o fue movida."
+        description="La pagina que buscas no existe o fue movida. Explora los animales disponibles para adopcion en Peru o vuelve al inicio de AdoptaMe."
         path="/404"
       />
       <div className="text-center max-w-md">
