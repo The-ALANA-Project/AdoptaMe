@@ -7,6 +7,9 @@ import {
   Send,
   Loader2,
   CheckCircle2,
+  Instagram,
+  Facebook,
+  ExternalLink,
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
@@ -14,6 +17,17 @@ import { SEO } from "../components/SEO";
 
 const HERO_IMG =
   "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeifjzhjkr7pkjbywne2cemthav3plevi4xofd3esmdbwd2pod7g2du/Zeus.png";
+
+const BRAELIA_IMG =
+  "https://scontent.flim20-1.fna.fbcdn.net/v/t39.30808-6/633276317_4277925302352897_4541785310514846509_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=1d70fc&_nc_ohc=LWwJrFLt_gAQ7kNvwETEFHF&_nc_oc=AdlLdM_Yz9YQ3ssnXxNp3SgbAP3Qmz5Lajjqg9zCIrSag193a5fI5BgVlsCi-kpX4uw&_nc_zt=23&_nc_ht=scontent.flim20-1.fna&_nc_gid=98TNn6JaqPi65GHpkNJgag&_nc_ss=8&oh=00_Afx7ZqSIU_h06t7BrLZ0snuHMarSWg35Lq1pp8ZXjCGa7Q&oe=69AF5B52";
+
+function TikTokIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.48v-7.15a8.16 8.16 0 005.58 2.2v-3.46a4.85 4.85 0 01-2-.58z" />
+    </svg>
+  );
+}
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-ba60542a`;
 
@@ -346,7 +360,7 @@ export function SobreMiPage() {
                 <p>
                   Tuve la suerte de conocer a{" "}
                   <a
-                    href="https://www.instagram.com/braeliagarcia/"
+                    href="https://www.facebook.com/braelia.garciachuquihuanga"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary hover:text-primary/80 no-underline"
@@ -358,6 +372,76 @@ export function SobreMiPage() {
                   en confiar en esta plataforma y permitir que sus rescatados fueran publicados
                   aqui. Gracias a ella, AdoptaMe dejo de ser solo una idea.
                 </p>
+
+                {/* Profile card */}
+                <div
+                  className="p-6 rounded-2xl border border-border bg-card"
+                  style={{ boxShadow: "0 2px 16px rgba(180,140,110,0.08)" }}
+                >
+                  <div className="flex flex-col sm:flex-row gap-5 items-start">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-primary/20">
+                      <ImageWithFallback
+                        src={BRAELIA_IMG}
+                        alt="Braelia Garcia Chuquihuanga"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4
+                        className="text-foreground mb-1"
+                        style={{ fontSize: "1.0625rem", fontWeight: 600 }}
+                      >
+                        Braelia Garcia Chuquihuanga
+                      </h4>
+                      <p
+                        className="text-primary mb-3"
+                        style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                      >
+                        Rescatista independiente
+                      </p>
+                      <p
+                        className="text-muted-foreground mb-4"
+                        style={{ fontSize: "0.875rem", lineHeight: 1.6 }}
+                      >
+                        Braelia rescata, rehabilita y busca hogares para perritos en situacion
+                        de calle. Su dedicacion y amor por los animales fue lo que le dio vida
+                        a AdoptaMe.
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <a
+                          href="https://www.facebook.com/braelia.garciachuquihuanga"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                        >
+                          <Facebook className="w-3.5 h-3.5" />
+                          Facebook
+                        </a>
+                        <a
+                          href="https://www.instagram.com/braeliagarcia/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                        >
+                          <Instagram className="w-3.5 h-3.5" />
+                          Instagram
+                        </a>
+                        <a
+                          href="https://www.tiktok.com/@brae1974"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                          style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                        >
+                          <TikTokIcon className="w-3.5 h-3.5" />
+                          TikTok
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
