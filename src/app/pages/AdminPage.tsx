@@ -46,7 +46,7 @@ import {
   adminCreateRescuer,
   adminUpdateRescuer,
   adminDeleteRescuer,
-  adminSeedBraelia,
+  adminSeedRescuers,
 } from "../data/api";
 import type { Animal, Submission, Inquiry, Seguimiento, Rescuer } from "../data/types";
 import { AdminEditModal } from "../components/AdminEditModal";
@@ -981,13 +981,13 @@ export function AdminPage() {
         <div className="space-y-6">
           <div className="flex gap-2 flex-wrap">
             <button
-              onClick={async () => { setActionLoading("seedBraelia"); try { const res = await adminSeedBraelia(password); setSeedMsg(res.message); await loadData(); } catch (err: any) { setSeedMsg(`Error: ${err.message}`); } finally { setActionLoading(null); } }}
-              disabled={actionLoading === "seedBraelia"}
+              onClick={async () => { setActionLoading("seedRescuers"); try { const res = await adminSeedRescuers(password); setSeedMsg(res.message); await loadData(); } catch (err: any) { setSeedMsg(`Error: ${err.message}`); } finally { setActionLoading(null); } }}
+              disabled={actionLoading === "seedRescuers"}
               className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-xl hover:bg-primary/5 transition-colors"
               style={{ fontSize: "0.875rem" }}
             >
-              {actionLoading === "seedBraelia" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-              Seed Braelia
+              {actionLoading === "seedRescuers" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
+              Seed rescatistas
             </button>
             <button
               onClick={() => { setEditingRescuer(null); setRescuerForm({ nombre: "", foto: "", bio: "", facebook: "", instagram: "", tiktok: "", web: "", email: "", whatsapp: "", donacion: "" }); }}
@@ -1004,7 +1004,7 @@ export function AdminPage() {
               <User className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
               <h3 className="mb-1">No hay rescatistas registrados</h3>
               <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-                Usa "Seed Braelia" para crear el primer perfil
+                Usa "Seed rescatistas" para cargar perfiles predefinidos
               </p>
             </div>
           ) : (
@@ -1045,13 +1045,22 @@ export function AdminPage() {
                         <div className="flex flex-wrap gap-3" style={{ fontSize: "0.8125rem" }}>
                           {r.facebook && <a href={`https://www.facebook.com/${r.facebook}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Facebook className="w-3.5 h-3.5" />{r.facebook}</a>}
                           {r.instagram && <a href={`https://www.instagram.com/${r.instagram}/`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Instagram className="w-3.5 h-3.5" />@{r.instagram}</a>}
-                          {r.tiktok && <a href={`https://www.tiktok.com/@${r.tiktok}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-muted-foreground rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80">TikTok: @{r.tiktok}</a>}
+                          {r.tiktok && <a href={`https://www.tiktok.com/@${r.tiktok}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80">TikTok: @{r.tiktok}</a>}
                           {r.web && <a href={r.web.startsWith("http") ? r.web : `https://${r.web}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-primary/5 text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Globe className="w-3.5 h-3.5" />{r.web}</a>}
                         </div>
                         {(r.email || r.whatsapp) && (
                           <div className="flex flex-wrap gap-4" style={{ fontSize: "0.875rem" }}>
                             {r.email && <a href={`mailto:${r.email}`} className="flex items-center gap-1.5 text-primary no-underline hover:underline"><Mail className="w-4 h-4" />{r.email}</a>}
                             {r.whatsapp && <a href={`https://wa.me/${r.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline"><Phone className="w-4 h-4" />{r.whatsapp}</a>}
+                          </div>
+                        )}
+                        {r.donacion && (
+                          <div>
+                            <span className="text-muted-foreground block mb-1" style={{ fontSize: "0.75rem" }}>Enlace de donacion</span>
+                            <a href={r.donacion} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground border border-primary rounded-lg no-underline hover:bg-background hover:text-primary transition-colors" style={{ fontSize: "0.8125rem", fontWeight: 500 }}>
+                              <Heart className="w-3.5 h-3.5" />
+                              Apoyar a {r.nombre.split(" ")[0]}
+                            </a>
                           </div>
                         )}
                         {linkedAnimals.length > 0 && (

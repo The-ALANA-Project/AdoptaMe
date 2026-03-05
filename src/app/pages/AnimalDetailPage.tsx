@@ -190,9 +190,34 @@ export function AnimalDetailPage() {
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(getShareUrl());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const url = getShareUrl();
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(() => {
+        fallbackCopy(url);
+      });
+    } else {
+      fallbackCopy(url);
+    }
+  };
+
+  const fallbackCopy = (text: string) => {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand("copy");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      console.error("Fallback copy failed");
+    }
+    document.body.removeChild(textarea);
   };
 
   const shareLinks = animal
@@ -423,7 +448,7 @@ export function AnimalDetailPage() {
 
           {/* Rescuer / caretaker profile */}
           {(rescuer || animal.contactoNombre) && (
-            <div className="mb-6 p-4 bg-primary/5 border border-primary/10 rounded-xl">
+            <div className="mb-6 p-4 bg-primary/5 border border-primary/10 hover:border-primary rounded-xl transition-colors">
               <p className="text-muted-foreground mb-2" style={{ fontSize: "0.75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Bajo el cuidado de
               </p>
@@ -459,7 +484,7 @@ export function AnimalDetailPage() {
                       </a>
                     )}
                     {rescuer.tiktok && (
-                      <a href={`https://www.tiktok.com/@${rescuer.tiktok}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-muted-foreground hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                      <a href={`https://www.tiktok.com/@${rescuer.tiktok}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.73a8.19 8.19 0 004.76 1.52V6.8a4.84 4.84 0 01-1-.11z"/></svg>
                         @{rescuer.tiktok}
                       </a>
@@ -470,19 +495,19 @@ export function AnimalDetailPage() {
                         Web
                       </a>
                     )}
+                    {rescuer.donacion && (
+                      <a
+                        href={rescuer.donacion}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary text-primary-foreground border border-primary rounded-lg hover:bg-background hover:text-primary transition-colors no-underline"
+                        style={{ fontSize: "0.8125rem" }}
+                      >
+                        <Heart className="w-3.5 h-3.5" />
+                        Apoyar a {rescuer.nombre.split(" ")[0]}
+                      </a>
+                    )}
                   </div>
-                  {rescuer.donacion && (
-                    <a
-                      href={rescuer.donacion}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity no-underline"
-                      style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                    >
-                      <Heart className="w-4 h-4" />
-                      Apoyar a {rescuer.nombre.split(" ")[0]}
-                    </a>
-                  )}
                 </>
               ) : (
                 <div className="flex items-center gap-3">
@@ -587,10 +612,10 @@ export function AnimalDetailPage() {
                   document.getElementById("adoption-form")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }, 100);
               }}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground border border-primary rounded-xl hover:bg-background hover:text-primary transition-colors"
               style={{ fontWeight: 500, fontSize: "1.0625rem" }}
             >
-              <Heart className="w-5 h-5" />
+              
               Quiero adoptar a {animal.nombre}
             </button>
           )}

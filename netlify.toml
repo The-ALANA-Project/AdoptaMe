@@ -1,6 +1,10 @@
 [build]
   publish = "dist"
 
+[[edge_functions]]
+  function = "og-proxy"
+  path = "/*"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

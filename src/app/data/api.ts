@@ -237,8 +237,8 @@ export async function adminDeleteRescuer(password: string, id: string) {
   });
 }
 
-export async function adminSeedBraelia(password: string) {
-  return request("/admin/rescuers/seed-braelia", {
+export async function adminSeedRescuers(password: string) {
+  return request("/admin/rescuers/seed", {
     method: "POST",
     headers: adminHeaders(password),
   });

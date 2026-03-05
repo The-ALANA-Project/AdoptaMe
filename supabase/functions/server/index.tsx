@@ -1279,48 +1279,71 @@ app.delete("/make-server-ba60542a/admin/rescuers/:id", async (c) => {
   }
 });
 
-// POST /admin/rescuers/seed-braelia — seed Braelia as the first rescuer (idempotent)
-app.post("/make-server-ba60542a/admin/rescuers/seed-braelia", async (c) => {
+// POST /admin/rescuers/seed — seed predefined rescuer profiles (idempotent)
+const SEED_RESCUERS = [
+  {
+    nombre: "Braelia Garcia Chuquihuanga",
+    foto: "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafkreibzgyqu6lcgrgtnok667fu67fp7ml3j6qufujteo27haw444iutl4",
+    bio: "Braelia rescata, rehabilita y busca hogares para perritos en situacion de calle. Su dedicacion y amor por los animales fue lo que le dio vida a AdoptaMe.",
+    facebook: "braelia.garciachuquihuanga",
+    instagram: "braeliagarcia",
+    tiktok: "brae1974",
+    web: "",
+    email: "",
+    whatsapp: "",
+    donacion: "https://www.paypal.me/misrescataditos",
+  },
+  // Add more predefined rescuers here as the platform grows
+];
+
+app.post("/make-server-ba60542a/admin/rescuers/seed", async (c) => {
   if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
   try {
     const existing = await kv.getByPrefix("rescuer:");
-    const braelia = existing.find((r: any) => r.nombre === "Braelia Garcia Chuquihuanga");
-    if (braelia) {
-      return c.json({ message: "Braelia ya existe como rescatista", rescuer: braelia, seeded: false });
-    }
-
-    const id = await nextId("rescuer");
-    const rescuer = {
-      id,
-      nombre: "Braelia Garcia Chuquihuanga",
-      foto: "https://teal-united-parrot-418.mypinata.cloud/ipfs/bafkreibzgyqu6lcgrgtnok667fu67fp7ml3j6qufujteo27haw444iutl4",
-      bio: "Braelia rescata, rehabilita y busca hogares para perritos en situacion de calle. Su dedicacion y amor por los animales fue lo que le dio vida a AdoptaMe.",
-      facebook: "braelia.garciachuquihuanga",
-      instagram: "braeliagarcia",
-      tiktok: "brae1974",
-      web: "",
-      email: "",
-      whatsapp: "",
-      donacion: "https://www.paypal.me/misrescataditos",
-      fechaCreacion: new Date().toISOString(),
-    };
-    await kv.set(`rescuer:${id}`, rescuer);
-
-    // Also link all existing animals with contactoNombre matching Braelia
+    const existingNames = new Set(existing.map((r: any) => r.nombre));
     const animals = await kv.getByPrefix("animal:");
-    let linked = 0;
-    for (const animal of animals) {
-      if (animal.contactoNombre === "Braelia Garcia Chuquihuanga" && !animal.rescuerId) {
-        animal.rescuerId = id;
-        await kv.set(`animal:${animal.id}`, animal);
-        linked++;
+
+    let created = 0;
+    let skipped = 0;
+    let totalLinked = 0;
+    const results: any[] = [];
+
+    for (const seed of SEED_RESCUERS) {
+      if (existingNames.has(seed.nombre)) {
+        skipped++;
+        results.push({ nombre: seed.nombre, status: "ya existe" });
+        continue;
       }
+
+      const id = await nextId("rescuer");
+      const rescuer = {
+        ...seed,
+        id,
+        fechaCreacion: new Date().toISOString(),
+      };
+      await kv.set(`rescuer:${id}`, rescuer);
+      created++;
+
+      // Auto-link animals with matching contactoNombre
+      let linked = 0;
+      for (const animal of animals) {
+        if (animal.contactoNombre === seed.nombre && !animal.rescuerId) {
+          animal.rescuerId = id;
+          await kv.set(`animal:${animal.id}`, animal);
+          linked++;
+        }
+      }
+      totalLinked += linked;
+      results.push({ nombre: seed.nombre, status: "creado", linked });
     }
 
-    return c.json({ message: `Braelia creada y vinculada a ${linked} animales`, rescuer, seeded: true });
+    return c.json({
+      message: `Seed completado: ${created} creados, ${skipped} ya existian, ${totalLinked} animales vinculados`,
+      results,
+    });
   } catch (err) {
-    console.log(`Error seeding Braelia: ${err}`);
-    return c.json({ error: `Error al crear rescatista: ${err}` }, 500);
+    console.log(`Error seeding rescuers: ${err}`);
+    return c.json({ error: `Error al hacer seed de rescatistas: ${err}` }, 500);
   }
 });
 

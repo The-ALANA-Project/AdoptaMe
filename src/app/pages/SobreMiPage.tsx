@@ -462,7 +462,7 @@ export function SobreMiPage() {
                           href={braelia?.donacion || "https://www.paypal.me/misrescataditos"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity no-underline"
+                          className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground border border-primary rounded-xl hover:bg-background hover:text-primary transition-colors no-underline"
                           style={{ fontSize: "0.8125rem", fontWeight: 500 }}
                         >
                           <Heart className="w-4 h-4" />
@@ -534,7 +534,7 @@ export function SobreMiPage() {
                 href="https://ko-fi.com/stellaachenbach"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity no-underline"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground border border-primary rounded-xl hover:bg-background hover:text-primary transition-colors no-underline"
                 style={{ fontSize: "0.9375rem", fontWeight: 500 }}
               >
                 <Heart className="w-4 h-4" />
