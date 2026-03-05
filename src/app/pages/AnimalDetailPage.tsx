@@ -504,9 +504,7 @@ export function AnimalDetailPage() {
                 className="text-muted-foreground"
                 style={{ fontSize: "0.875rem", lineHeight: 1.6 }}
               >
-                Recibimos tu interes en adoptar a {animal.nombre}. Revisaremos tu
-                solicitud y te contactaremos pronto para coordinar los
-                siguientes pasos.
+                Revisa tu correo — te enviamos una confirmacion.
               </p>
             </div>
           ) : (
@@ -578,10 +576,11 @@ export function AnimalDetailPage() {
                     </div>
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                        Correo electronico
+                        Correo electronico *
                       </label>
                       <input
                         type="email"
+                        required
                         placeholder="tu@correo.com"
                         value={inquiry.email}
                         onChange={(e) => setInquiry((p) => ({ ...p, email: e.target.value }))}
@@ -590,10 +589,11 @@ export function AnimalDetailPage() {
                     </div>
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                        Telefono / WhatsApp
+                        Telefono / WhatsApp *
                       </label>
                       <input
                         type="tel"
+                        required
                         placeholder="+51 999 999 999"
                         value={inquiry.telefono}
                         onChange={(e) => setInquiry((p) => ({ ...p, telefono: e.target.value }))}
@@ -633,10 +633,11 @@ export function AnimalDetailPage() {
                     )}
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                        Departamento
+                        Departamento *
                       </label>
                       <input
                         type="text"
+                        required
                         placeholder="Lima"
                         value={inquiry.departamento}
                         onChange={(e) => setInquiry((p) => ({ ...p, departamento: e.target.value }))}
@@ -645,10 +646,11 @@ export function AnimalDetailPage() {
                     </div>
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                        Provincia
+                        Provincia *
                       </label>
                       <input
                         type="text"
+                        required
                         placeholder="Lima"
                         value={inquiry.provincia}
                         onChange={(e) => setInquiry((p) => ({ ...p, provincia: e.target.value }))}
@@ -657,10 +659,11 @@ export function AnimalDetailPage() {
                     </div>
                     <div>
                       <label className="block mb-1.5" style={{ fontSize: "0.875rem" }}>
-                        Distrito
+                        Distrito *
                       </label>
                       <input
                         type="text"
+                        required
                         placeholder="Lima"
                         value={inquiry.distrito}
                         onChange={(e) => setInquiry((p) => ({ ...p, distrito: e.target.value }))}
@@ -898,6 +901,55 @@ export function AnimalDetailPage() {
                   </div>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Full-width Success State ===== */}
+      {!animal.adoptado && inquirySubmitted && (
+        <div id="adoption-form" className="mt-12 scroll-mt-24">
+          <div className="p-8 sm:p-12 lg:p-16 bg-card border border-border rounded-2xl text-center">
+            <div className="max-w-lg mx-auto">
+              <div className="w-16 h-16 bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
+                <Heart className="w-8 h-8 text-primary" />
+              </div>
+              <h2 style={{ fontSize: "1.75rem", fontWeight: 600 }} className="mb-3">
+                Tu solicitud fue enviada
+              </h2>
+              <p
+                className="text-muted-foreground mb-6"
+                style={{ fontSize: "1rem", lineHeight: 1.7 }}
+              >
+                Gracias por tu interes en adoptar a <strong className="text-foreground">{animal.nombre}</strong>.
+                Nuestro equipo revisara tu solicitud y te contactaremos pronto para coordinar los siguientes pasos.
+              </p>
+
+              <div className="p-4 bg-secondary border border-border rounded-xl mb-8 inline-flex items-center gap-3">
+                <Send className="w-5 h-5 text-primary flex-shrink-0" />
+                <p className="text-left" style={{ fontSize: "0.875rem", lineHeight: 1.5 }}>
+                  Te enviamos un correo de confirmacion a <strong>{inquiry.email}</strong>. Revisa tu bandeja de entrada.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  to="/animales"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl no-underline hover:opacity-90 transition-opacity"
+                  style={{ fontWeight: 500, fontSize: "0.9375rem" }}
+                >
+                  Conoce mas animales
+                </Link>
+                <button
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border rounded-xl hover:bg-muted transition-colors"
+                  style={{ fontWeight: 500, fontSize: "0.9375rem" }}
+                >
+                  Volver al perfil de {animal.nombre}
+                </button>
+              </div>
             </div>
           </div>
         </div>

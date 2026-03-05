@@ -94,6 +94,110 @@ async function sendEmailNotification(subject: string, htmlBody: string) {
   }
 }
 
+// --- Helper: send branded confirmation email to applicant ---
+async function sendConfirmationToApplicant(nombre: string, email: string, animalNombre: string) {
+  const resendKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendKey) {
+    console.log("RESEND_API_KEY not set — skipping confirmation email");
+    return;
+  }
+  try {
+    const confirmationHtml = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0; padding:0; background-color:#FFFAF7; font-family:'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFAF7; padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px; background-color:#FFFFFF; border-radius:16px; overflow:hidden; border:1px solid rgba(226,102,74,0.15);">
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#E2664A; padding:32px 40px; text-align:center;">
+              <h1 style="margin:0; color:#FDF7F3; font-size:28px; font-weight:700; letter-spacing:-0.5px;">AdoptaMe</h1>
+              <p style="margin:8px 0 0; color:rgba(253,247,243,0.85); font-size:14px; font-weight:400;">Plataforma comunitaria de adopcion animal</p>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="margin:0 0 8px; color:#1A1A2E; font-size:22px; font-weight:600;">Hola ${nombre}!</h2>
+              <p style="margin:0 0 24px; color:#7C6E64; font-size:15px; line-height:1.7;">
+                Recibimos tu solicitud de adopcion para <strong style="color:#1A1A2E;">${animalNombre}</strong>. Nos alegra mucho tu interes en darle un hogar.
+              </p>
+
+              <!-- Info card -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FEF2ED; border-radius:12px; margin-bottom:24px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <p style="margin:0 0 12px; color:#E2664A; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Que sigue?</p>
+                    <ol style="margin:0; padding-left:20px; color:#1A1A2E; font-size:14px; line-height:2;">
+                      <li>Nuestro equipo revisara tu solicitud</li>
+                      <li>Evaluaremos la compatibilidad con ${animalNombre}</li>
+                      <li>Te contactaremos para coordinar los siguientes pasos</li>
+                    </ol>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 24px; color:#7C6E64; font-size:14px; line-height:1.7;">
+                Este proceso puede tomar unos dias. Mientras tanto, si tienes alguna pregunta, puedes responder directamente a este correo.
+              </p>
+
+              <!-- CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="https://adoptame.pe/animales" style="display:inline-block; background-color:#E2664A; color:#FDF7F3; text-decoration:none; padding:14px 32px; border-radius:12px; font-size:15px; font-weight:500;">
+                      Conoce mas animales en adopcion
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px; border-top:1px solid rgba(226,102,74,0.15); text-align:center;">
+              <p style="margin:0 0 4px; color:#7C6E64; font-size:12px;">
+                Gracias por elegir adoptar y no comprar.
+              </p>
+              <p style="margin:0; color:#D5CBC3; font-size:12px;">
+                AdoptaMe &mdash; adoptame.pe &mdash; Lima, Peru
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "AdoptaMe <hola@adoptame.pe>",
+        to: [email],
+        subject: `Recibimos tu solicitud para adoptar a ${animalNombre}`,
+        html: confirmationHtml,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text();
+      console.log(`Resend confirmation email error (${res.status}): ${errText}`);
+    } else {
+      console.log(`Confirmation email sent to ${email} for ${animalNombre}`);
+    }
+  } catch (err) {
+    console.log(`Error sending confirmation email to ${email}: ${err}`);
+  }
+}
+
 // --- Supabase Storage helper ---
 function getSupabase() {
   return createClient(
@@ -394,13 +498,19 @@ app.post("/make-server-ba60542a/submissions", async (c) => {
 app.post("/make-server-ba60542a/inquiries", async (c) => {
   try {
     const body = await c.req.json();
-    const { animalId, animalNombre, nombre, email, telefono, tipoDocumento, numeroDocumento, linkedin, facebook, instagram, vivienda, otrasMascotas, experiencia, mensaje, seguimiento } = body;
+    const { animalId, animalNombre, nombre, email, telefono, tipoDocumento, numeroDocumento, departamento, provincia, distrito, linkedin, facebook, instagram, vivienda, otrasMascotas, experiencia, mensaje, seguimiento } = body;
 
     if (!animalId || !nombre || !mensaje) {
       return c.json({ error: "Faltan campos requeridos." }, 400);
     }
-    if (!email && !telefono) {
-      return c.json({ error: "Debes proporcionar al menos un medio de contacto (correo o telefono)." }, 400);
+    if (!email) {
+      return c.json({ error: "El correo electronico es obligatorio." }, 400);
+    }
+    if (!telefono) {
+      return c.json({ error: "El telefono / WhatsApp es obligatorio." }, 400);
+    }
+    if (!departamento || !provincia || !distrito) {
+      return c.json({ error: "Departamento, provincia y distrito son obligatorios." }, 400);
     }
 
     const id = await nextId("inquiry");
@@ -410,10 +520,13 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       animalId,
       animalNombre: animalNombre || "",
       nombre,
-      email: email || "",
-      telefono: telefono || "",
+      email,
+      telefono,
       tipoDocumento: tipoDocumento || "",
       numeroDocumento: numeroDocumento || "",
+      departamento,
+      provincia,
+      distrito,
       linkedin: linkedin || "",
       facebook: facebook || "",
       instagram: instagram || "",
@@ -428,7 +541,7 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
 
     await kv.set(`inquiry:${id}`, inquiry);
 
-    // Send email notification for adoption inquiry
+    // Send email notification to admin for adoption inquiry
     const subject = `Nueva Solicitud de Adopcion: ${animalNombre || "un animal"}`;
     const htmlBody = `
       <h2>Nueva solicitud de adopcion en AdoptaMe</h2>
@@ -436,9 +549,10 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       <h3>Datos del interesado</h3>
       <ul>
         <li><strong>Nombre:</strong> ${nombre}</li>
-        <li><strong>Email:</strong> ${email || "No proporcionado"}</li>
-        <li><strong>Telefono:</strong> ${telefono || "No proporcionado"}</li>
+        <li><strong>Email:</strong> ${email}</li>
+        <li><strong>Telefono:</strong> ${telefono}</li>
         ${tipoDocumento && numeroDocumento ? `<li><strong>Documento:</strong> ${tipoDocumento} ${numeroDocumento}</li>` : ""}
+        <li><strong>Ubicacion:</strong> ${distrito}, ${provincia}, ${departamento}</li>
         ${linkedin ? `<li><strong>LinkedIn:</strong> <a href="${linkedin}">${linkedin}</a></li>` : ""}
         ${facebook ? `<li><strong>Facebook:</strong> ${facebook}</li>` : ""}
         ${instagram ? `<li><strong>Instagram:</strong> @${instagram.replace("@", "")}</li>` : ""}
@@ -458,6 +572,9 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
       <p>Revisa la solicitud en el panel de administracion de AdoptaMe.</p>
     `;
     await sendEmailNotification(subject, htmlBody);
+
+    // Send branded confirmation email to applicant
+    await sendConfirmationToApplicant(nombre, email, animalNombre || "este animal");
 
     return c.json({ message: "Tu solicitud fue enviada. Te contactaremos pronto." });
   } catch (err) {
