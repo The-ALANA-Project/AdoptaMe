@@ -687,34 +687,91 @@ app.post("/make-server-ba60542a/inquiries", async (c) => {
 
     // Send email notification to admin for adoption inquiry
     const subject = `Nueva Solicitud de Adopcion: ${animalNombre || "un animal"}`;
-    const htmlBody = `
-      <h2>Nueva solicitud de adopcion en AdoptaMe</h2>
-      <p>Alguien quiere adoptar a <strong>${animalNombre || animalId}</strong>.</p>
-      <h3>Datos del interesado</h3>
-      <ul>
-        <li><strong>Nombre:</strong> ${nombre}</li>
-        <li><strong>Email:</strong> ${email}</li>
-        <li><strong>Telefono:</strong> ${telefono}</li>
-        ${tipoDocumento && numeroDocumento ? `<li><strong>Documento:</strong> ${tipoDocumento} ${numeroDocumento}</li>` : ""}
-        <li><strong>Ubicacion:</strong> ${distrito}, ${provincia}, ${departamento}</li>
-        ${linkedin ? `<li><strong>LinkedIn:</strong> <a href="${linkedin}">${linkedin}</a></li>` : ""}
-        ${facebook ? `<li><strong>Facebook:</strong> ${facebook}</li>` : ""}
-        ${instagram ? `<li><strong>Instagram:</strong> @${instagram.replace("@", "")}</li>` : ""}
-      </ul>
-      <h3>Situacion del hogar</h3>
-      <ul>
-        <li><strong>Vivienda:</strong> ${vivienda || "No especificado"}</li>
-        <li><strong>Otras mascotas:</strong> ${otrasMascotas || "No especificado"}</li>
-        <li><strong>Experiencia previa:</strong> ${experiencia || "No especificado"}</li>
-      </ul>
-      <p><strong>Por que quiere adoptar:</strong></p>
-      <blockquote style="border-left: 3px solid #E2664A; padding-left: 12px; color: #333;">${mensaje}</blockquote>
-      <h3>Compromisos</h3>
-      <ul>
-        <li><strong>Seguimiento post-adopcion:</strong> ${seguimiento ? "✅ Aceptado" : "❌ No aceptado"}</li>
-      </ul>
-      <p>Revisa la solicitud en el panel de administracion de AdoptaMe.</p>
-    `;
+    const htmlBody = `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0; padding:0; background-color:#FFFAF7; font-family:'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFAF7; padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background-color:#FFFFFF; border-radius:16px; overflow:hidden; border:1px solid rgba(226,102,74,0.15);">
+          <tr>
+            <td style="background-color:#E2664A; padding:24px 40px; text-align:center;">
+              <h1 style="margin:0; color:#FDF7F3; font-size:24px; font-weight:700;">Nueva Solicitud de Adopcion</h1>
+              <p style="margin:6px 0 0; color:rgba(253,247,243,0.85); font-size:13px;">AdoptaMe &mdash; Panel de Administracion</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px 40px;">
+              <p style="margin:0 0 20px; color:#1A1A2E; font-size:15px; line-height:1.6;">
+                Alguien quiere adoptar a <strong>${animalNombre || animalId}</strong>.
+              </p>
+
+              <h3 style="margin:0 0 12px; color:#E2664A; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Datos del interesado</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FEF2ED; border-radius:12px; margin-bottom:24px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <ul style="margin:0; padding-left:18px; color:#1A1A2E; font-size:14px; line-height:2.2; list-style:none;">
+                      <li><strong>Nombre:</strong> ${nombre}</li>
+                      <li><strong>Email:</strong> ${email}</li>
+                      <li><strong>Telefono:</strong> ${telefono}</li>
+                      ${tipoDocumento && numeroDocumento ? `<li><strong>Documento:</strong> ${tipoDocumento} ${numeroDocumento}</li>` : ""}
+                      <li><strong>Ubicacion:</strong> ${distrito}, ${provincia}, ${departamento}</li>
+                      ${linkedin ? `<li><strong>LinkedIn:</strong> <a href="${linkedin}" style="color:#E2664A;">${linkedin}</a></li>` : ""}
+                      ${facebook ? `<li><strong>Facebook:</strong> ${facebook}</li>` : ""}
+                      ${instagram ? `<li><strong>Instagram:</strong> @${instagram.replace("@", "")}</li>` : ""}
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <h3 style="margin:0 0 12px; color:#E2664A; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Situacion del hogar</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FEF2ED; border-radius:12px; margin-bottom:24px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <ul style="margin:0; padding-left:18px; color:#1A1A2E; font-size:14px; line-height:2.2; list-style:none;">
+                      <li><strong>Vivienda:</strong> ${vivienda || "No especificado"}</li>
+                      <li><strong>Otras mascotas:</strong> ${otrasMascotas || "No especificado"}</li>
+                      <li><strong>Experiencia previa:</strong> ${experiencia || "No especificado"}</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <h3 style="margin:0 0 12px; color:#E2664A; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Por que quiere adoptar</h3>
+              <blockquote style="margin:0 0 24px; border-left:3px solid #E2664A; padding:12px 16px; color:#1A1A2E; font-size:14px; line-height:1.7; background-color:#FEF2ED; border-radius:0 12px 12px 0;">
+                ${mensaje}
+              </blockquote>
+
+              <h3 style="margin:0 0 12px; color:#E2664A; font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Compromisos</h3>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FEF2ED; border-radius:12px; margin-bottom:24px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <ul style="margin:0; padding-left:18px; color:#1A1A2E; font-size:14px; line-height:2.2; list-style:none;">
+                      <li><strong>Seguimiento post-adopcion:</strong> ${seguimiento ? "✅ Aceptado" : "❌ No aceptado"}</li>
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0; color:#7C6E64; font-size:14px; line-height:1.6;">
+                Revisa la solicitud en el <strong>panel de administracion</strong> de AdoptaMe.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:20px 40px; border-top:1px solid rgba(226,102,74,0.15); text-align:center;">
+              <p style="margin:0; color:#D5CBC3; font-size:12px;">
+                AdoptaMe &mdash; adoptame.pe &mdash; Lima, Peru
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
     await sendEmailNotification(subject, htmlBody);
 
     // Send branded confirmation email to applicant

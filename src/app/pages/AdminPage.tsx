@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Loader2,
   CheckCircle2,
@@ -10,7 +10,6 @@ import {
   PawPrint,
   RefreshCw,
   Heart,
-  Database,
   Mail,
   Phone,
   Globe,
@@ -36,8 +35,6 @@ import {
   adminReject,
   adminDeleteAnimal,
   adminDeleteInquiry,
-  adminSeed,
-  adminSeedPending,
   adminToggleAdopted,
   adminUpdateSubmission,
   adminUpdateAnimal,
@@ -47,7 +44,6 @@ import {
   adminCreateRescuer,
   adminUpdateRescuer,
   adminDeleteRescuer,
-  adminSeedRescuers,
 } from "../data/api";
 import type { Animal, Submission, Inquiry, Seguimiento, Rescuer } from "../data/types";
 import { AdminEditModal } from "../components/AdminEditModal";
@@ -66,8 +62,6 @@ export function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [seedMsg, setSeedMsg] = useState("");
-  const hasAutoSeeded = useRef(false);
   const [editItem, setEditItem] = useState<{ item: any; type: "submission" | "animal" } | null>(null);
   const [adoptPickerAnimal, setAdoptPickerAnimal] = useState<Animal | null>(null);
   const [noteText, setNoteText] = useState<Record<string, string>>({});
@@ -93,21 +87,6 @@ export function AdminPage() {
         const segs = await adminGetSeguimientos(password);
         setSeguimientos(segs);
       } catch { /* seguimiento table may be empty */ }
-
-      // Auto-seed if no animals exist (only once per session)
-      if (anims.length === 0 && !hasAutoSeeded.current) {
-        hasAutoSeeded.current = true;
-        setSeedMsg("No se encontraron animales. Creando perfiles iniciales...");
-        try {
-          const res = await adminSeed(password);
-          setSeedMsg(res.message);
-          const freshAnimals = await adminGetAnimals(password);
-          setAnimals(freshAnimals);
-          setTab("animals");
-        } catch (seedErr: any) {
-          setSeedMsg(`Error al crear seed: ${seedErr.message}`);
-        }
-      }
 
       // Load rescuers
       try {
@@ -187,40 +166,6 @@ export function AdminPage() {
       await loadData();
     } catch (err) {
       console.error("Error deleting inquiry:", err);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleSeed = async () => {
-    setSeedMsg("");
-    setActionLoading("seed");
-    try {
-      const res = await adminSeed(password);
-      setSeedMsg(res.message);
-      await loadData();
-      if (res.seeded) {
-        setTab("animals");
-      }
-    } catch (err: any) {
-      setSeedMsg(`Error: ${err.message}`);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleSeedPending = async () => {
-    setSeedMsg("");
-    setActionLoading("seedPending");
-    try {
-      const res = await adminSeedPending(password);
-      setSeedMsg(res.message);
-      await loadData();
-      if (res.seeded) {
-        setTab("submissions");
-      }
-    } catch (err: any) {
-      setSeedMsg(`Error: ${err.message}`);
     } finally {
       setActionLoading(null);
     }
@@ -366,44 +311,16 @@ export function AdminPage() {
             Gestiona envios, solicitudes y animales publicados
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleSeed}
-            disabled={actionLoading === "seed"}
-            className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-xl hover:bg-primary/5 transition-colors"
-            style={{ fontSize: "0.875rem" }}
-            title="Cargar los 3 perros iniciales"
-          >
-            {actionLoading === "seed" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-            Seed inicial
-          </button>
-          <button
-            onClick={handleSeedPending}
-            disabled={actionLoading === "seedPending"}
-            className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-xl hover:bg-primary/5 transition-colors"
-            style={{ fontSize: "0.875rem" }}
-            title="Cargar los 3 perros pendientes"
-          >
-            {actionLoading === "seedPending" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-            Seed pendientes
-          </button>
-          <button
-            onClick={loadData}
-            disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl hover:bg-muted transition-colors"
-            style={{ fontSize: "0.875rem" }}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Actualizar
-          </button>
-        </div>
+        <button
+          onClick={loadData}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl hover:bg-muted transition-colors"
+          style={{ fontSize: "0.875rem" }}
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+          Actualizar
+        </button>
       </div>
-
-      {seedMsg && (
-        <div className={`p-3 rounded-xl mb-6 ${seedMsg.startsWith("Error") ? "bg-destructive/10 border border-destructive/20 text-destructive" : "bg-secondary border border-border text-primary"}`} style={{ fontSize: "0.875rem" }}>
-          {seedMsg}
-        </div>
-      )}
 
       {/* Tabs */}
       <div className="flex gap-1 mb-8 bg-muted p-1 rounded-xl w-fit flex-wrap">
@@ -988,15 +905,6 @@ export function AdminPage() {
         <div className="space-y-6">
           <div className="flex gap-2 flex-wrap">
             <button
-              onClick={async () => { setActionLoading("seedRescuers"); try { const res = await adminSeedRescuers(password); setSeedMsg(res.message); await loadData(); } catch (err: any) { setSeedMsg(`Error: ${err.message}`); } finally { setActionLoading(null); } }}
-              disabled={actionLoading === "seedRescuers"}
-              className="flex items-center gap-2 px-4 py-2 border border-primary/30 text-primary rounded-xl hover:bg-primary/5 transition-colors"
-              style={{ fontSize: "0.875rem" }}
-            >
-              {actionLoading === "seedRescuers" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-              Seed rescatistas
-            </button>
-            <button
               onClick={() => { setEditingRescuer(null); setRescuerForm({ nombre: "", foto: "", bio: "", facebook: "", instagram: "", tiktok: "", web: "", email: "", whatsapp: "", donacion: "" }); }}
               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity"
               style={{ fontSize: "0.875rem" }}
@@ -1011,7 +919,7 @@ export function AdminPage() {
               <User className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
               <h3 className="mb-1">No hay rescatistas registrados</h3>
               <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-                Usa "Seed rescatistas" para cargar perfiles predefinidos
+                Usa "Nuevo rescatista" para agregar un perfil
               </p>
             </div>
           ) : (
@@ -1099,7 +1007,7 @@ export function AdminPage() {
             <PawPrint className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
             <h3 className="mb-1">No hay animales publicados</h3>
             <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-              Usa el boton "Seed inicial" para cargar los primeros 3 perros, o aprueba envios pendientes
+              Aprueba envios pendientes para publicar animales
             </p>
           </div>
         ) : (

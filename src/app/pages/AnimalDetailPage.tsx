@@ -628,20 +628,7 @@ export function AnimalDetailPage() {
                 Ver otros animales
               </Link>
             </div>
-          ) : inquirySubmitted ? (
-            <div className="p-6 bg-secondary border border-border rounded-2xl text-center">
-              <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-3" />
-              <h3 className="mb-1" style={{ fontSize: "1.125rem" }}>
-                Solicitud enviada
-              </h3>
-              <p
-                className="text-muted-foreground"
-                style={{ fontSize: "0.875rem", lineHeight: 1.6 }}
-              >
-                Revisa tu correo — te enviamos una confirmacion.
-              </p>
-            </div>
-          ) : (
+          ) : inquirySubmitted ? null : (
             <button
               onClick={() => {
                 setShowForm(true);
@@ -1066,7 +1053,7 @@ export function AnimalDetailPage() {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Link
                   to="/animales"
                   className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl no-underline hover:opacity-90 transition-opacity"
@@ -1078,7 +1065,7 @@ export function AnimalDetailPage() {
                   onClick={() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border rounded-xl hover:bg-muted transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border rounded-xl hover:bg-muted transition-colors sm:ml-auto"
                   style={{ fontWeight: 500, fontSize: "0.9375rem" }}
                 >
                   Volver al perfil de {animal.nombre}
