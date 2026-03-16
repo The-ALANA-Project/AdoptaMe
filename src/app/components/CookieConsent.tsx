@@ -17,12 +17,15 @@ function loadGtag() {
 
   // @ts-ignore
   window.dataLayer = window.dataLayer || [];
-  function gtag(...args: any[]) {
+  // @ts-ignore
+  window.gtag = function() {
     // @ts-ignore
-    window.dataLayer.push(args);
-  }
-  gtag("js", new Date());
-  gtag("config", GA_ID);
+    window.dataLayer.push(arguments);
+  };
+  // @ts-ignore
+  window.gtag("js", new Date());
+  // @ts-ignore
+  window.gtag("config", GA_ID);
 }
 
 export function CookieConsent() {
