@@ -4,7 +4,6 @@ import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { SEO } from "./SEO";
 import { CookieConsent } from "./CookieConsent";
-import { GADebug } from "./GADebug";
 
 export function Layout() {
   const { pathname } = useLocation();
@@ -15,16 +14,13 @@ export function Layout() {
 
   // Track pageviews on route changes
   useEffect(() => {
-    // Check if gtag is available
     if (typeof window.gtag === "function") {
-      console.log("[GA] 📊 Tracking page view for:", pathname);
+      console.log("[GA] Tracking page view for:", pathname);
       window.gtag("event", "page_view", {
         page_path: pathname,
         page_location: window.location.href,
         page_title: document.title,
       });
-    } else {
-      console.log("[GA] ⚠️ gtag not available yet for:", pathname);
     }
   }, [pathname]);
 
@@ -37,7 +33,6 @@ export function Layout() {
       </main>
       <Footer />
       <CookieConsent />
-      <GADebug />
     </div>
   );
 }
