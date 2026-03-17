@@ -5,32 +5,59 @@ import { Cookie } from "lucide-react";
 const CONSENT_KEY = "adoptame_cookie_consent";
 const GA_ID = "G-T3C0K5GXJK";
 
-function loadGtag() {
+// Declare global types for TypeScript
+declare global {
+  interface Window {
+    dataLayer: any[];
+    gtag: (...args: any[]) => void;
+    gaLoaded?: boolean;
+  }
+}
+
+function loadGoogleAnalytics() {
   // Prevent double-loading
-  if (document.getElementById("gtag-script")) return;
+  if (window.gaLoaded) {
+    console.log("[GA] ✓ Already initialized");
+    return;
+  }
 
-  // Initialize dataLayer before loading script
-  // @ts-ignore
-  window.dataLayer = window.dataLayer || [];
-  // @ts-ignore
-  window.gtag = function() {
-    // @ts-ignore
-    window.dataLayer.push(arguments);
-  };
+  console.log("[GA] 🚀 Initializing Google Analytics with ID:", GA_ID);
 
+  // gtag function is already defined in index.html via vite.config.ts
+  // Just need to load the external script and configure
+  
+  window.gaLoaded = true;
+
+  // Configure GA4
+  window.gtag("js", new Date());
+  window.gtag("config", GA_ID, {
+    send_page_view: false, // We manually send page_view events in Layout
+    debug_mode: true,
+  });
+
+  console.log("[GA] ✓ Configuration sent");
+
+  // Load the external gtag script
   const script = document.createElement("script");
-  script.id = "gtag-script";
   script.async = true;
   script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  
+  script.onload = () => {
+    console.log("[GA] ✓ External script loaded from googletagmanager.com");
+    // Send initial page view
+    window.gtag("event", "page_view", {
+      page_path: window.location.pathname,
+      page_location: window.location.href,
+      page_title: document.title || "AdoptaMe",
+    });
+    console.log("[GA] ✓ Initial page_view sent for:", window.location.pathname);
+  };
+  
+  script.onerror = (error) => {
+    console.error("[GA] ❌ Failed to load gtag script:", error);
+  };
+  
   document.head.appendChild(script);
-
-  // Configure GA4 after defining gtag
-  // @ts-ignore
-  window.gtag("js", new Date());
-  // @ts-ignore
-  window.gtag("config", GA_ID, {
-    send_page_view: false, // We'll manually send page_view events
-  });
 }
 
 export function CookieConsent() {
@@ -38,25 +65,33 @@ export function CookieConsent() {
 
   useEffect(() => {
     const consent = localStorage.getItem(CONSENT_KEY);
+    console.log("[GA] Cookie consent status:", consent || "(not set - will show banner)");
+    
     if (consent === "accepted") {
       // User already accepted — load GA immediately
-      loadGtag();
+      loadGoogleAnalytics();
     } else if (consent === "rejected") {
-      // User already rejected — don't show banner, don't load GA
+      // User already rejected — don't load GA
+      console.log("[GA] User previously rejected analytics");
     } else {
       // No choice yet — show the banner after a short delay
-      const timer = setTimeout(() => setVisible(true), 1500);
+      const timer = setTimeout(() => {
+        console.log("[GA] Showing cookie consent banner");
+        setVisible(true);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, []);
 
   const handleAccept = () => {
+    console.log("[GA] ✓ User accepted cookies");
     localStorage.setItem(CONSENT_KEY, "accepted");
     setVisible(false);
-    loadGtag();
+    loadGoogleAnalytics();
   };
 
   const handleReject = () => {
+    console.log("[GA] User rejected cookies");
     localStorage.setItem(CONSENT_KEY, "rejected");
     setVisible(false);
   };

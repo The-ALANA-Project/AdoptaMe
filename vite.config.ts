@@ -12,7 +12,16 @@ export default defineConfig({
     {
       name: 'inject-og-meta',
       transformIndexHtml(html) {
-        const ogTags = `
+        // Add Google Analytics and OG meta tags
+        const headTags = `
+    <!-- Google Analytics -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+    </script>
+    
+    <!-- Open Graph Meta Tags -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://adoptame.pe" />
     <meta property="og:title" content="AdoptaMe — Adopta un animal en Peru" />
@@ -29,7 +38,7 @@ export default defineConfig({
     <meta name="twitter:description" content="Encuentra a tu companero ideal. AdoptaMe es una plataforma comunitaria de adopcion animal en Peru donde puedes adoptar perros, gatos y mas." />
     <meta name="twitter:image" content="https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeihscx6ivorazotnxpzv3gaz2p3a3fdnbs2x6lss6vpp5kmfa3tdai/AdoptaMe%20Social%20Crawler.png" />
     <link rel="icon" type="image/png" href="https://teal-united-parrot-418.mypinata.cloud/ipfs/bafybeihscx6ivorazotnxpzv3gaz2p3a3fdnbs2x6lss6vpp5kmfa3tdai/AdoptaMe%20Favicon.png" />`;
-        return html.replace('</head>', `${ogTags}\n  </head>`);
+        return html.replace('</head>', `${headTags}\n  </head>`);
       },
     },
   ],
