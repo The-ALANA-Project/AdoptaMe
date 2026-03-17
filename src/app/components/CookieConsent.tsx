@@ -9,12 +9,7 @@ function loadGtag() {
   // Prevent double-loading
   if (document.getElementById("gtag-script")) return;
 
-  const script = document.createElement("script");
-  script.id = "gtag-script";
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
-  document.head.appendChild(script);
-
+  // Initialize dataLayer before loading script
   // @ts-ignore
   window.dataLayer = window.dataLayer || [];
   // @ts-ignore
@@ -22,10 +17,20 @@ function loadGtag() {
     // @ts-ignore
     window.dataLayer.push(arguments);
   };
+
+  const script = document.createElement("script");
+  script.id = "gtag-script";
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(script);
+
+  // Configure GA4 after defining gtag
   // @ts-ignore
   window.gtag("js", new Date());
   // @ts-ignore
-  window.gtag("config", GA_ID);
+  window.gtag("config", GA_ID, {
+    send_page_view: false, // We'll manually send page_view events
+  });
 }
 
 export function CookieConsent() {
