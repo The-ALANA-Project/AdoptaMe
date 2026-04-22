@@ -50,8 +50,20 @@ import { AdminEditModal } from "../components/AdminEditModal";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 
 export function AdminPage() {
-  const [password, setPassword] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
+  const [password, setPassword] = useState(() => {
+    // Restore password from sessionStorage if available
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem("adminPassword") || "";
+    }
+    return "";
+  });
+  const [authenticated, setAuthenticated] = useState(() => {
+    // Check if we have a stored password to auto-authenticate
+    if (typeof window !== "undefined") {
+      return !!sessionStorage.getItem("adminPassword");
+    }
+    return false;
+  });
   const [authError, setAuthError] = useState("");
 
   const [tab, setTab] = useState<"submissions" | "animals" | "inquiries" | "seguimiento" | "adoptados" | "rescuers">("animals");
@@ -110,10 +122,19 @@ export function AdminPage() {
     setAuthError("");
     try {
       await adminGetSubmissions(password);
+      // Store password in sessionStorage for this session
+      sessionStorage.setItem("adminPassword", password);
       setAuthenticated(true);
     } catch {
       setAuthError("Contrasena incorrecta");
+      sessionStorage.removeItem("adminPassword");
     }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("adminPassword");
+    setPassword("");
+    setAuthenticated(false);
   };
 
   useEffect(() => {
@@ -333,15 +354,24 @@ export function AdminPage() {
             Gestiona envios, solicitudes y animales publicados
           </p>
         </div>
-        <button
-          onClick={loadData}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl hover:bg-muted transition-colors"
-          style={{ fontSize: "0.875rem" }}
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          Actualizar
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl hover:bg-muted transition-colors"
+            style={{ fontSize: "0.875rem" }}
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            Actualizar
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl hover:bg-destructive/10 hover:text-destructive transition-colors"
+            style={{ fontSize: "0.875rem" }}
+          >
+            Cerrar sesion
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
