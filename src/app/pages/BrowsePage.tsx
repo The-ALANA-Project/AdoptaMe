@@ -29,6 +29,9 @@ export function BrowsePage() {
 
   const filtered = useMemo(() => {
     return animals.filter((a) => {
+      // Exclude adopted animals from public listing
+      if (a.adoptado) return false;
+
       const matchSearch =
         !search ||
         a.nombre.toLowerCase().includes(search.toLowerCase()) ||

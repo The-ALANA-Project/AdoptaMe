@@ -19,8 +19,12 @@ export function HomePage() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Randomized hero slideshow from actual animals with images
-  const heroAnimals = animals.filter((a) => a.imagen).slice(0, 6);
+  // Only show available (not adopted) animals in public views
+  const availableAnimals = animals.filter((a) => !a.adoptado);
+  const featured = availableAnimals.slice(0, 6);
+
+  // Randomized hero slideshow from available animals with images
+  const heroAnimals = availableAnimals.filter((a) => a.imagen).slice(0, 6);
 
   useEffect(() => {
     if (heroAnimals.length <= 1) return;
@@ -30,19 +34,16 @@ export function HomePage() {
     return () => clearInterval(timer);
   }, [heroAnimals.length]);
 
-  const featured = animals.slice(0, 6);
-
-  // 3 random non-adopted animals for the mid-page showcase
+  // 3 random available animals for the mid-page showcase
   // Urgent animals get priority, then fill remaining slots with random available
   const showcaseAnimals = useMemo(() => {
-    const available = animals.filter((a) => !a.adoptado && a.imagen);
-    const urgent = available.filter((a) => a.urgente);
-    const nonUrgent = available.filter((a) => !a.urgente);
+    const urgent = availableAnimals.filter((a) => a.urgente && a.imagen);
+    const nonUrgent = availableAnimals.filter((a) => !a.urgente && a.imagen);
     const shuffledNonUrgent = [...nonUrgent].sort(() => Math.random() - 0.5);
     // Show all urgent first, then fill up to 3 total with random non-urgent
     const result = [...urgent, ...shuffledNonUrgent].slice(0, 3);
     return result;
-  }, [animals]);
+  }, [availableAnimals]);
 
   const hasUrgent = showcaseAnimals.some((a) => a.urgente);
 
@@ -128,10 +129,10 @@ export function HomePage() {
               <div className="flex items-start mt-10">
                 <div className="flex-1">
                   <p className="text-primary" style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-                    {animals.length || "—"}
+                    {availableAnimals.length || "—"}
                   </p>
                   <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
-                    Animales publicados
+                    Animales disponibles
                   </p>
                 </div>
                 <div className="w-px h-10 bg-border" />

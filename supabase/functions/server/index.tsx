@@ -975,7 +975,7 @@ app.delete("/make-server-ba60542a/admin/animals/:id", async (c) => {
   }
 });
 
-// POST /admin/animals/:id/toggle-adopted — toggle adopted status
+// POST /admin/animals/:id/toggle-adopted — toggle adopted status (no longer creates seguimiento)
 app.post("/make-server-ba60542a/admin/animals/:id/toggle-adopted", async (c) => {
   if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
   try {
@@ -983,35 +983,8 @@ app.post("/make-server-ba60542a/admin/animals/:id/toggle-adopted", async (c) => 
     const animal = await kv.get(`animal:${animalId}`);
     if (!animal) return c.json({ error: "Animal no encontrado" }, 404);
 
-    const body = await c.req.json().catch(() => ({}));
-    const { inquiryId } = body;
-
     animal.adoptado = !animal.adoptado;
     await kv.set(`animal:${animalId}`, animal);
-
-    // If marking as adopted and an inquiry was selected, create a seguimiento record
-    if (animal.adoptado && inquiryId) {
-      const inquiry = await kv.get(`inquiry:${inquiryId}`);
-      if (inquiry) {
-        const segId = await nextId("seg");
-        const seguimiento = {
-          id: segId,
-          animalId: animal.id,
-          animalNombre: animal.nombre,
-          animalSlug: animal.slug || "",
-          animalImagen: animal.imagen || "",
-          adoptanteNombre: inquiry.nombre,
-          adoptanteEmail: inquiry.email || "",
-          adoptanteTelefono: inquiry.telefono || "",
-          adoptanteTipoDoc: inquiry.tipoDocumento || "",
-          adoptanteNumeroDoc: inquiry.numeroDocumento || "",
-          inquiryId: inquiry.id,
-          fechaAdopcion: new Date().toISOString(),
-          notas: [],
-        };
-        await kv.set(`seguimiento:${segId}`, seguimiento);
-      }
-    }
 
     // If un-marking as adopted, remove associated seguimiento records
     if (!animal.adoptado) {
@@ -1027,6 +1000,66 @@ app.post("/make-server-ba60542a/admin/animals/:id/toggle-adopted", async (c) => 
   } catch (err) {
     console.log(`Error toggling adopted status: ${err}`);
     return c.json({ error: `Error al cambiar estado: ${err}` }, 500);
+  }
+});
+
+// POST /admin/seguimientos/create — create a seguimiento record for an adopted animal
+app.post("/make-server-ba60542a/admin/seguimientos/create", async (c) => {
+  if (!isAdmin(c)) return c.json({ error: "No autorizado" }, 401);
+  try {
+    const body = await c.req.json();
+    const { animalId, inquiryId } = body;
+
+    const animal = await kv.get(`animal:${animalId}`);
+    if (!animal) return c.json({ error: "Animal no encontrado" }, 404);
+    if (!animal.adoptado) return c.json({ error: "El animal debe estar marcado como adoptado primero" }, 400);
+
+    // Check if seguimiento already exists for this animal
+    const existingSegs = await kv.getByPrefix("seguimiento:");
+    const existing = existingSegs.find((s: any) => s.animalId === animalId);
+    if (existing) return c.json({ error: "Ya existe un seguimiento para este animal" }, 400);
+
+    let adoptanteNombre = "Adoptante no especificado";
+    let adoptanteEmail = "";
+    let adoptanteTelefono = "";
+    let adoptanteTipoDoc = "";
+    let adoptanteNumeroDoc = "";
+    let linkedInquiryId = "";
+
+    if (inquiryId) {
+      const inquiry = await kv.get(`inquiry:${inquiryId}`);
+      if (inquiry) {
+        adoptanteNombre = inquiry.nombre;
+        adoptanteEmail = inquiry.email || "";
+        adoptanteTelefono = inquiry.telefono || "";
+        adoptanteTipoDoc = inquiry.tipoDocumento || "";
+        adoptanteNumeroDoc = inquiry.numeroDocumento || "";
+        linkedInquiryId = inquiry.id;
+      }
+    }
+
+    const segId = await nextId("seg");
+    const seguimiento = {
+      id: segId,
+      animalId: animal.id,
+      animalNombre: animal.nombre,
+      animalSlug: animal.slug || "",
+      animalImagen: animal.imagen || "",
+      adoptanteNombre,
+      adoptanteEmail,
+      adoptanteTelefono,
+      adoptanteTipoDoc,
+      adoptanteNumeroDoc,
+      inquiryId: linkedInquiryId,
+      fechaAdopcion: new Date().toISOString(),
+      notas: [],
+    };
+    await kv.set(`seguimiento:${segId}`, seguimiento);
+
+    return c.json({ message: "Seguimiento activado", seguimiento });
+  } catch (err) {
+    console.log(`Error creating seguimiento: ${err}`);
+    return c.json({ error: `Error al crear seguimiento: ${err}` }, 500);
   }
 });
 

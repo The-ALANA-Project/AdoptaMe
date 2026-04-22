@@ -47,13 +47,14 @@ import {
 } from "../data/api";
 import type { Animal, Submission, Inquiry, Seguimiento, Rescuer } from "../data/types";
 import { AdminEditModal } from "../components/AdminEditModal";
+import { projectId, publicAnonKey } from "/utils/supabase/info";
 
 export function AdminPage() {
   const [password, setPassword] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
   const [authError, setAuthError] = useState("");
 
-  const [tab, setTab] = useState<"submissions" | "animals" | "inquiries" | "seguimiento" | "rescuers">("animals");
+  const [tab, setTab] = useState<"submissions" | "animals" | "inquiries" | "seguimiento" | "adoptados" | "rescuers">("animals");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -63,12 +64,12 @@ export function AdminPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<{ item: any; type: "submission" | "animal" } | null>(null);
-  const [adoptPickerAnimal, setAdoptPickerAnimal] = useState<Animal | null>(null);
   const [noteText, setNoteText] = useState<Record<string, string>>({});
   const [rescuerForm, setRescuerForm] = useState<Partial<Rescuer> | null>(null);
   const [editingRescuer, setEditingRescuer] = useState<Rescuer | null>(null);
   const [pendingRescuerIds, setPendingRescuerIds] = useState<Record<string, string>>({});
   const [pendingRescuerFromSub, setPendingRescuerFromSub] = useState<string | null>(null);
+  const [seguimientoPickerAnimal, setSeguimientoPickerAnimal] = useState<Animal | null>(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -171,16 +172,37 @@ export function AdminPage() {
     }
   };
 
-  const handleToggleAdopted = async (id: string, inquiryId?: string) => {
+  const handleToggleAdopted = async (id: string) => {
     setActionLoading(id);
     try {
-      await adminToggleAdopted(password, id, inquiryId);
+      await adminToggleAdopted(password, id);
       await loadData();
     } catch (err) {
       console.error("Error toggling adopted:", err);
     } finally {
       setActionLoading(null);
-      setAdoptPickerAnimal(null);
+    }
+  };
+
+  const handleActivateSeguimiento = async (animalId: string, inquiryId?: string) => {
+    setActionLoading(animalId);
+    try {
+      // Call a new endpoint to create seguimiento without toggling adopted status
+      await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-ba60542a/admin/seguimientos/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${publicAnonKey}`,
+          "X-Admin-Password": password,
+        },
+        body: JSON.stringify({ animalId, inquiryId: inquiryId || null }),
+      }).then(res => res.json());
+      await loadData();
+    } catch (err) {
+      console.error("Error activating seguimiento:", err);
+    } finally {
+      setActionLoading(null);
+      setSeguimientoPickerAnimal(null);
     }
   };
 
@@ -355,7 +377,18 @@ export function AdminPage() {
           }`}
           style={{ fontSize: "0.875rem", fontWeight: 500 }}
         >
-          Publicados ({animals.length})
+          Publicados ({animals.filter((a) => !a.adoptado).length})
+        </button>
+        <button
+          onClick={() => setTab("adoptados")}
+          className={`px-5 py-2.5 rounded-lg transition-colors ${
+            tab === "adoptados"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={{ fontSize: "0.875rem", fontWeight: 500 }}
+        >
+          Adoptados ({animals.filter((a) => a.adoptado).length})
         </button>
         <button
           onClick={() => setTab("seguimiento")}
@@ -732,6 +765,120 @@ export function AdminPage() {
             ))}
           </div>
         )
+      ) : tab === "adoptados" ? (
+        /* ===== Adoptados tab (Success Archive) ===== */
+        (() => {
+          const adoptedAnimals = animals.filter((a) => a.adoptado);
+          return adoptedAnimals.length === 0 ? (
+            <div className="text-center py-16 bg-card border border-border rounded-2xl">
+              <Heart className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="mb-1">No hay animales adoptados aun</h3>
+              <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
+                Cuando marques un animal como adoptado, aparecera aqui
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {adoptedAnimals.map((animal) => {
+                const seg = seguimientos.find(s => s.animalId === animal.id);
+                return (
+                  <div key={animal.id} className="flex items-center justify-between p-4 bg-card border border-border rounded-xl hover:border-primary transition-colors">
+                    <div className="flex items-center gap-4">
+                      {animal.imagen && (
+                        <div className="relative">
+                          <img src={animal.imagen} alt={animal.nombre} className="w-12 h-12 rounded-lg object-cover" />
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                            <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
+                          </div>
+                        </div>
+                      )}
+                      <div>
+                        <p style={{ fontWeight: 500 }}>
+                          {animal.nombre}
+                          <span className="px-2 py-0.5 bg-secondary text-primary rounded text-xs ml-2" style={{ fontWeight: 500 }}>
+                            Adoptado
+                          </span>
+                          {seg && (
+                            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs ml-1" style={{ fontWeight: 500 }}>
+                              En seguimiento
+                            </span>
+                          )}
+                          <span className="text-muted-foreground" style={{ fontWeight: 400, fontSize: "0.875rem" }}>
+                            {" "}— {animal.especie} · {animal.ubicacion}
+                          </span>
+                        </p>
+                        <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
+                          Publicado: {new Date(animal.fechaPublicacion).toLocaleDateString("es-PE")}
+                          {seg && (
+                            <>
+                              {" · "}Adoptado por: <span className="text-primary" style={{ fontWeight: 500 }}>{seg.adoptanteNombre}</span>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleToggleAdopted(animal.id)}
+                        disabled={actionLoading === animal.id}
+                        className="p-2 text-primary hover:bg-secondary rounded-lg transition-colors"
+                        title="Marcar como disponible"
+                      >
+                        <Heart className="w-4 h-4 fill-primary" />
+                      </button>
+                      {!seg && (
+                        <button
+                          onClick={() => {
+                            const animalInquiries = inquiries.filter(inq => inq.animalId === animal.id);
+                            if (animalInquiries.length > 0) {
+                              setSeguimientoPickerAnimal(animal);
+                            } else {
+                              handleActivateSeguimiento(animal.id);
+                            }
+                          }}
+                          disabled={actionLoading === animal.id}
+                          className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                          style={{ fontSize: "0.75rem", fontWeight: 500 }}
+                          title="Activar seguimiento"
+                        >
+                          <ClipboardList className="w-3.5 h-3.5 inline mr-1" />
+                          Activar seguimiento
+                        </button>
+                      )}
+                      {seg && (
+                        <button
+                          onClick={() => { setTab("seguimiento"); setExpandedId(seg.id); }}
+                          className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors"
+                          style={{ fontSize: "0.75rem", fontWeight: 500 }}
+                          title="Ver seguimiento"
+                        >
+                          Ver seguimiento
+                        </button>
+                      )}
+                      <button
+                        onClick={() => setEditItem({ item: animal, type: "animal" })}
+                        className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                        title="Editar"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <a href={`/animales/${animal.slug || animal.id}`} target="_blank" rel="noopener noreferrer" className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Ver publicacion">
+                        <Eye className="w-4 h-4" />
+                      </a>
+                      {actionLoading === animal.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        <button onClick={() => handleDelete(animal.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors" title="Eliminar">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()
       ) : tab === "seguimiento" ? (
         /* ===== Seguimiento tab ===== */
         seguimientos.length === 0 ? (
@@ -1002,17 +1149,20 @@ export function AdminPage() {
         </div>
       ) : (
         /* ===== Animals tab ===== */
-        animals.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border rounded-2xl">
-            <PawPrint className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <h3 className="mb-1">No hay animales publicados</h3>
-            <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
-              Aprueba envios pendientes para publicar animales
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {animals.map((animal) => (
+        (() => {
+          // Filter out adopted animals from the Publicados tab - they belong in Seguimiento
+          const availableAnimals = animals.filter((a) => !a.adoptado);
+          return availableAnimals.length === 0 ? (
+            <div className="text-center py-16 bg-card border border-border rounded-2xl">
+              <PawPrint className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+              <h3 className="mb-1">No hay animales disponibles</h3>
+              <p className="text-muted-foreground" style={{ fontSize: "0.875rem" }}>
+                Aprueba envios pendientes para publicar animales
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {availableAnimals.map((animal) => (
               <div key={animal.id} className="flex items-center justify-between p-4 bg-card border border-border rounded-xl hover:border-primary transition-colors">
                 <div className="flex items-center gap-4">
                   {animal.imagen && (
@@ -1052,20 +1202,7 @@ export function AdminPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => {
-                      if (animal.adoptado) {
-                        // Un-marking: just toggle directly
-                        handleToggleAdopted(animal.id);
-                      } else {
-                        // Marking as adopted: check if there are inquiries for this animal
-                        const animalInquiries = inquiries.filter(inq => inq.animalId === animal.id);
-                        if (animalInquiries.length > 0) {
-                          setAdoptPickerAnimal(animal);
-                        } else {
-                          handleToggleAdopted(animal.id);
-                        }
-                      }
-                    }}
+                    onClick={() => handleToggleAdopted(animal.id)}
                     disabled={actionLoading === animal.id}
                     className={`p-2 rounded-lg transition-colors ${
                       animal.adoptado
@@ -1095,9 +1232,10 @@ export function AdminPage() {
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        )
+              ))}
+            </div>
+          );
+        })()
       )}
 
       {/* Edit Modal */}
@@ -1118,26 +1256,26 @@ export function AdminPage() {
         />
       )}
 
-      {/* Adopt Picker Modal */}
-      {adoptPickerAnimal && (() => {
-        const animalInqs = inquiries.filter(inq => inq.animalId === adoptPickerAnimal.id);
+      {/* Seguimiento Picker Modal */}
+      {seguimientoPickerAnimal && (() => {
+        const animalInqs = inquiries.filter(inq => inq.animalId === seguimientoPickerAnimal.id);
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => setAdoptPickerAnimal(null)}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-4" onClick={() => setSeguimientoPickerAnimal(null)}>
             <div className="bg-background border border-border rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
               <div className="p-6 border-b border-border">
                 <h2 style={{ fontSize: "1.125rem", fontWeight: 600 }}>
-                  Marcar a {adoptPickerAnimal.nombre} como adoptado
+                  Activar seguimiento para {seguimientoPickerAnimal.nombre}
                 </h2>
                 <p className="text-muted-foreground mt-1" style={{ fontSize: "0.875rem" }}>
-                  Selecciona quien adopto a {adoptPickerAnimal.nombre} para crear el seguimiento:
+                  Selecciona quien adopto a {seguimientoPickerAnimal.nombre}:
                 </p>
               </div>
               <div className="p-4 space-y-2 max-h-64 overflow-y-auto">
                 {animalInqs.map(inq => (
                   <button
                     key={inq.id}
-                    onClick={() => handleToggleAdopted(adoptPickerAnimal.id, inq.id)}
-                    disabled={actionLoading === adoptPickerAnimal.id}
+                    onClick={() => handleActivateSeguimiento(seguimientoPickerAnimal.id, inq.id)}
+                    disabled={actionLoading === seguimientoPickerAnimal.id}
                     className="w-full text-left p-3 border border-border rounded-xl hover:border-primary hover:bg-secondary transition-colors"
                   >
                     <p style={{ fontWeight: 500, fontSize: "0.9375rem" }}>{inq.nombre}</p>
@@ -1150,15 +1288,15 @@ export function AdminPage() {
               </div>
               <div className="p-4 border-t border-border flex gap-2">
                 <button
-                  onClick={() => handleToggleAdopted(adoptPickerAnimal.id)}
-                  disabled={actionLoading === adoptPickerAnimal.id}
+                  onClick={() => handleActivateSeguimiento(seguimientoPickerAnimal.id)}
+                  disabled={actionLoading === seguimientoPickerAnimal.id}
                   className="flex-1 px-4 py-2.5 border border-border rounded-xl hover:bg-muted transition-colors text-muted-foreground"
                   style={{ fontSize: "0.875rem" }}
                 >
-                  Adoptar sin vincular solicitud
+                  Activar sin vincular solicitud
                 </button>
                 <button
-                  onClick={() => setAdoptPickerAnimal(null)}
+                  onClick={() => setSeguimientoPickerAnimal(null)}
                   className="px-4 py-2.5 border border-border rounded-xl hover:bg-muted transition-colors"
                   style={{ fontSize: "0.875rem" }}
                 >
@@ -1169,6 +1307,7 @@ export function AdminPage() {
           </div>
         );
       })()}
+
 
       {/* Rescuer Form Modal */}
       {rescuerForm && (

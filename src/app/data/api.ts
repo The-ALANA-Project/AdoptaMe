@@ -156,11 +156,10 @@ export async function adminDeleteAnimal(password: string, id: string) {
   });
 }
 
-export async function adminToggleAdopted(password: string, id: string, inquiryId?: string) {
+export async function adminToggleAdopted(password: string, id: string) {
   return request(`/admin/animals/${id}/toggle-adopted`, {
     method: "POST",
     headers: adminHeaders(password),
-    body: JSON.stringify({ inquiryId: inquiryId || null }),
   });
 }
 
