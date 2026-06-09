@@ -621,9 +621,9 @@ app.post("/make-server-ba60542a/submissions", async (c) => {
         <li><strong>Nombre:</strong> ${contactoNombre}</li>
         ${contactoEmail ? `<li><strong>Email:</strong> ${contactoEmail}</li>` : ""}
         ${contactoWhatsapp ? `<li><strong>WhatsApp:</strong> ${contactoWhatsapp}</li>` : ""}
-        ${body.contactoInstagram ? `<li><strong>Instagram:</strong> <a href="https://instagram.com/${body.contactoInstagram.replace('@', '')}">@${body.contactoInstagram.replace('@', '')}</a></li>` : ""}
-        ${body.contactoFacebook ? `<li><strong>Facebook:</strong> <a href="https://facebook.com/${body.contactoFacebook.replace('@', '')}">@${body.contactoFacebook.replace('@', '')}</a></li>` : ""}
-        ${body.contactoTiktok ? `<li><strong>TikTok:</strong> <a href="https://tiktok.com/@${body.contactoTiktok.replace('@', '')}">@${body.contactoTiktok.replace('@', '')}</a></li>` : ""}
+        ${body.contactoInstagram ? `<li><strong>Instagram:</strong> <a href="${body.contactoInstagram.startsWith('http') ? body.contactoInstagram : `https://${body.contactoInstagram}`}">${body.contactoInstagram}</a></li>` : ""}
+        ${body.contactoFacebook ? `<li><strong>Facebook:</strong> <a href="${body.contactoFacebook.startsWith('http') ? body.contactoFacebook : `https://${body.contactoFacebook}`}">${body.contactoFacebook}</a></li>` : ""}
+        ${body.contactoTiktok ? `<li><strong>TikTok:</strong> <a href="${body.contactoTiktok.startsWith('http') ? body.contactoTiktok : `https://${body.contactoTiktok}`}">${body.contactoTiktok}</a></li>` : ""}
         ${body.contactoWeb ? `<li><strong>Web:</strong> <a href="${body.contactoWeb}">${body.contactoWeb}</a></li>` : ""}
         ${body.contactoSobreTi ? `<li><strong>Sobre Ti:</strong> ${body.contactoSobreTi}</li>` : ""}
       </ul>

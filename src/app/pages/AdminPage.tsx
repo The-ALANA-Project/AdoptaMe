@@ -531,12 +531,12 @@ export function AdminPage() {
                       {sub.contactoWhatsapp && <span className="text-muted-foreground">WhatsApp: {sub.contactoWhatsapp}</span>}
                       {sub.contactoInstagram && (
                         <a
-                          href={`https://www.instagram.com/${sub.contactoInstagram.replace("@", "")}/`}
+                          href={sub.contactoInstagram.startsWith("http") ? sub.contactoInstagram : `https://${sub.contactoInstagram}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:text-primary/80 no-underline"
                         >
-                          IG: @{sub.contactoInstagram.replace("@", "")}
+                          Instagram
                         </a>
                       )}
                     </div>
@@ -556,14 +556,25 @@ export function AdminPage() {
                     {(sub.contactoFacebook || sub.contactoTiktok || sub.contactoWeb) && (
                       <div className="flex flex-wrap gap-3" style={{ fontSize: "0.8125rem" }}>
                         {sub.contactoFacebook && (
-                          <span className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5">
-                            FB: {sub.contactoFacebook}
-                          </span>
+                          <a
+                            href={sub.contactoFacebook.startsWith("http") ? sub.contactoFacebook : `https://${sub.contactoFacebook}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80 transition-opacity"
+                          >
+                            <Facebook className="w-3.5 h-3.5" />
+                            Facebook
+                          </a>
                         )}
                         {sub.contactoTiktok && (
-                          <span className="px-2.5 py-1 bg-secondary text-muted-foreground rounded-lg flex items-center gap-1.5">
-                            TikTok: {sub.contactoTiktok}
-                          </span>
+                          <a
+                            href={sub.contactoTiktok.startsWith("http") ? sub.contactoTiktok : `https://${sub.contactoTiktok}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2.5 py-1 bg-secondary text-muted-foreground rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80 transition-opacity"
+                          >
+                            TikTok
+                          </a>
                         )}
                         {sub.contactoWeb && (
                           <a
@@ -1135,9 +1146,9 @@ export function AdminPage() {
                       <div className="px-4 pb-4 border-t border-border pt-4 space-y-3">
                         {r.bio && <div><span className="text-muted-foreground block mb-1" style={{ fontSize: "0.75rem" }}>Bio</span><p style={{ fontSize: "0.875rem", lineHeight: 1.6 }}>{r.bio}</p></div>}
                         <div className="flex flex-wrap gap-3" style={{ fontSize: "0.8125rem" }}>
-                          {r.facebook && <a href={`https://www.facebook.com/${r.facebook}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Facebook className="w-3.5 h-3.5" />{r.facebook}</a>}
-                          {r.instagram && <a href={`https://www.instagram.com/${r.instagram}/`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Instagram className="w-3.5 h-3.5" />@{r.instagram}</a>}
-                          {r.tiktok && <a href={`https://www.tiktok.com/@${r.tiktok}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80">TikTok: @{r.tiktok}</a>}
+                          {r.facebook && <a href={r.facebook.startsWith("http") ? r.facebook : `https://${r.facebook}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Facebook className="w-3.5 h-3.5" />Facebook</a>}
+                          {r.instagram && <a href={r.instagram.startsWith("http") ? r.instagram : `https://${r.instagram}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Instagram className="w-3.5 h-3.5" />Instagram</a>}
+                          {r.tiktok && <a href={r.tiktok.startsWith("http") ? r.tiktok : `https://${r.tiktok}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-secondary text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80">TikTok</a>}
                           {r.web && <a href={r.web.startsWith("http") ? r.web : `https://${r.web}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-primary/5 text-primary rounded-lg flex items-center gap-1.5 no-underline hover:opacity-80"><Globe className="w-3.5 h-3.5" />{r.web}</a>}
                         </div>
                         {(r.email || r.whatsapp) && (
@@ -1350,15 +1361,15 @@ export function AdminPage() {
             <div className="p-6 space-y-4">
               {[
                 { key: "nombre", label: "Nombre completo *", type: "text" },
-                { key: "foto", label: "URL de foto de perfil", type: "text", placeholder: "https://..." },
+                { key: "foto", label: "URL de foto de perfil", type: "url", placeholder: "https://..." },
                 { key: "bio", label: "Bio / descripcion", type: "textarea" },
-                { key: "facebook", label: "Facebook (usuario)", type: "text", placeholder: "braelia.garciachuquihuanga" },
-                { key: "instagram", label: "Instagram (usuario)", type: "text", placeholder: "braeliagarcia" },
-                { key: "tiktok", label: "TikTok (usuario)", type: "text", placeholder: "brae1974" },
-                { key: "web", label: "Sitio web", type: "text", placeholder: "https://..." },
+                { key: "facebook", label: "Facebook (URL completo)", type: "url", placeholder: "https://www.facebook.com/tuperfil" },
+                { key: "instagram", label: "Instagram (URL completo)", type: "url", placeholder: "https://www.instagram.com/tucuenta/" },
+                { key: "tiktok", label: "TikTok (URL completo)", type: "url", placeholder: "https://www.tiktok.com/@tucuenta" },
+                { key: "web", label: "Sitio web", type: "url", placeholder: "https://..." },
                 { key: "email", label: "Email de contacto", type: "email" },
                 { key: "whatsapp", label: "WhatsApp", type: "text", placeholder: "+51..." },
-                { key: "donacion", label: "Enlace de donacion", type: "text", placeholder: "https://www.paypal.me/... o https://ko-fi.com/..." },
+                { key: "donacion", label: "Enlace de donacion", type: "url", placeholder: "https://www.paypal.me/... o https://ko-fi.com/..." },
               ].map(({ key, label, type, placeholder }) => (
                 <div key={key}>
                   <label className="block mb-1.5" style={{ fontSize: "0.875rem", fontWeight: 500 }}>{label}</label>

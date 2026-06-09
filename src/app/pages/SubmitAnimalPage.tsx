@@ -456,8 +456,8 @@ export function SubmitAnimalPage() {
         <div>
           <label className="block mb-2">Instagram</label>
           <input
-            type="text"
-            placeholder="@tucuenta"
+            type="url"
+            placeholder="https://www.instagram.com/tucuenta/"
             value={form.contactoInstagram}
             onChange={(e) => update("contactoInstagram", e.target.value)}
             className={inputClass}
@@ -468,8 +468,8 @@ export function SubmitAnimalPage() {
           <div>
             <label className="block mb-2">Facebook</label>
             <input
-              type="text"
-              placeholder="Nombre o enlace de perfil"
+              type="url"
+              placeholder="https://www.facebook.com/tuperfil"
               value={form.contactoFacebook}
               onChange={(e) => update("contactoFacebook", e.target.value)}
               className={inputClass}
@@ -478,8 +478,8 @@ export function SubmitAnimalPage() {
           <div>
             <label className="block mb-2">TikTok</label>
             <input
-              type="text"
-              placeholder="@tucuenta"
+              type="url"
+              placeholder="https://www.tiktok.com/@tucuenta"
               value={form.contactoTiktok}
               onChange={(e) => update("contactoTiktok", e.target.value)}
               className={inputClass}

@@ -418,42 +418,54 @@ export function SobreMiPage() {
                         {braelia?.bio || "Braelia rescata, rehabilita y busca hogares para perritos en situacion de calle. Su dedicacion y amor por los animales fue lo que le dio vida a AdoptaMe."}
                       </p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        {(braelia?.facebook || "braelia.garciachuquihuanga") && (
-                          <a
-                            href={`https://www.facebook.com/${braelia?.facebook || "braelia.garciachuquihuanga"}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
-                            style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                          >
-                            <Facebook className="w-3.5 h-3.5" />
-                            Facebook
-                          </a>
-                        )}
-                        {(braelia?.instagram || "braeliagarcia") && (
-                          <a
-                            href={`https://www.instagram.com/${braelia?.instagram || "braeliagarcia"}/`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
-                            style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                          >
-                            <Instagram className="w-3.5 h-3.5" />
-                            Instagram
-                          </a>
-                        )}
-                        {(braelia?.tiktok || "brae1974") && (
-                          <a
-                            href={`https://www.tiktok.com/@${braelia?.tiktok || "brae1974"}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
-                            style={{ fontSize: "0.8125rem", fontWeight: 500 }}
-                          >
-                            <TikTokIcon className="w-3.5 h-3.5" />
-                            TikTok
-                          </a>
-                        )}
+                        {(() => {
+                          const fb = braelia?.facebook || "https://www.facebook.com/braelia.garciachuquihuanga";
+                          const fbUrl = fb.startsWith("http") ? fb : `https://www.facebook.com/${fb}`;
+                          return (
+                            <a
+                              href={fbUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                              style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                            >
+                              <Facebook className="w-3.5 h-3.5" />
+                              Facebook
+                            </a>
+                          );
+                        })()}
+                        {(() => {
+                          const ig = braelia?.instagram || "https://www.instagram.com/braeliagarcia/";
+                          const igUrl = ig.startsWith("http") ? ig : `https://www.instagram.com/${ig}/`;
+                          return (
+                            <a
+                              href={igUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                              style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                            >
+                              <Instagram className="w-3.5 h-3.5" />
+                              Instagram
+                            </a>
+                          );
+                        })()}
+                        {(() => {
+                          const tt = braelia?.tiktok || "https://www.tiktok.com/@brae1974";
+                          const ttUrl = tt.startsWith("http") ? tt : `https://www.tiktok.com/@${tt}`;
+                          return (
+                            <a
+                              href={ttUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary text-foreground rounded-lg hover:bg-primary hover:text-primary-foreground transition-colors no-underline"
+                              style={{ fontSize: "0.8125rem", fontWeight: 500 }}
+                            >
+                              <TikTokIcon className="w-3.5 h-3.5" />
+                              TikTok
+                            </a>
+                          );
+                        })()}
                       </div>
                       {(braelia?.donacion || "https://www.paypal.me/misrescataditos") && (
                         <a
