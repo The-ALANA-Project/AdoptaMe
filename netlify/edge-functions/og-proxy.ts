@@ -1,3 +1,6 @@
+// Only social-preview bots get the OG proxy. Search engine bots (googlebot,
+// bingbot, applebot) must NOT be listed here — the OG endpoint returns noindex
+// HTML intended for link previews, which would block search indexing.
 const CRAWLER_USER_AGENTS = [
   "linkedinbot",
   "facebookexternalhit",
@@ -7,10 +10,7 @@ const CRAWLER_USER_AGENTS = [
   "telegrambot",
   "whatsapp",
   "discordbot",
-  "googlebot",
-  "bingbot",
   "pinterestbot",
-  "applebot",
 ];
 
 const OG_ENDPOINT =

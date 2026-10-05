@@ -8,6 +8,8 @@ export function SubmitAnimalPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [imageError, setImageError] = useState(false);
+  const [socialError, setSocialError] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -45,7 +47,7 @@ export function SubmitAnimalPage() {
 
     // Preview immediately
     const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.onload = (ev) => { setImagePreview(ev.target?.result as string); setImageError(false); };
     reader.readAsDataURL(file);
 
     setUploadingImage(true);
@@ -70,6 +72,32 @@ export function SubmitAnimalPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setImageError(false);
+    setSocialError(false);
+
+    const hasImage = form.imagen || imagePreview;
+    const hasSocialMedia = form.contactoInstagram || form.contactoFacebook || form.contactoTiktok;
+
+    if (!hasImage) {
+      setImageError(true);
+      setError("Necesitas subir una foto del animal o pegar un enlace a una imagen para poder publicarlo.");
+      const imageSection = document.querySelector('[data-section="image"]');
+      if (imageSection) {
+        imageSection.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
+    if (!hasSocialMedia) {
+      setSocialError(true);
+      setError("Por favor proporciona al menos un perfil de redes sociales (Instagram, Facebook o TikTok) para verificar tu identidad.");
+      const socialSection = document.querySelector('[data-section="social-media"]');
+      if (socialSection) {
+        socialSection.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
     setSubmitting(true);
     try {
       await submitAnimal(form);
@@ -177,59 +205,80 @@ export function SubmitAnimalPage() {
           <h3 className="mb-4 pb-2 border-b border-primary">Datos del animal</h3>
         </div>
 
-        {/* Photo URL */}
-        <div>
-          <label className="block mb-2">Foto del animal (URL)</label>
-          <input
-            type="url"
-            placeholder="https://ejemplo.com/foto-del-animal.jpg"
-            value={form.imagen}
-            onChange={(e) => update("imagen", e.target.value)}
-            className={inputClass}
-          />
-          <p className="text-muted-foreground mt-1.5" style={{ fontSize: "0.8125rem" }}>
-            Pega un enlace a una foto del animal (puedes subirla a Google Drive, Imgur, etc.)
-          </p>
-        </div>
-
-        {/* Upload photo */}
-        <div className="relative">
-          <label className="block mb-2">Subir foto del animal</label>
-          <div className="flex items-center gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              id="animal-image-upload"
-            />
-            <label
-              htmlFor="animal-image-upload"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-xl no-underline hover:opacity-90 transition-opacity cursor-pointer"
-            >
-              <ImagePlus className="w-5 h-5" />
-              Subir
-            </label>
-            {uploadingImage && (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            )}
+        {/* Photo URL + Upload — grouped as one required section */}
+        <div data-section="image" className={`p-4 rounded-xl border ${imageError ? "border-destructive bg-destructive/5" : "border-border bg-muted/20"}`}>
+          <div className="flex items-start gap-2 mb-3">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${imageError ? "bg-destructive" : (form.imagen || imagePreview) ? "bg-primary" : "bg-muted-foreground/30"}`}>
+              {(form.imagen || imagePreview) ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />
+              ) : (
+                <span className="text-primary-foreground text-xs" style={{ fontWeight: 700 }}>{imageError ? "!" : "?"}</span>
+              )}
+            </div>
+            <div>
+              <p className={imageError ? "text-destructive" : "text-foreground"} style={{ fontSize: "0.875rem", fontWeight: 600 }}>
+                Foto del animal (requerida) *
+              </p>
+              <p className="text-muted-foreground mt-0.5" style={{ fontSize: "0.8125rem" }}>
+                Sube una foto o pega un enlace. Sin foto no podemos publicar al animal.
+              </p>
+            </div>
           </div>
+
+          <div className="space-y-3">
+            <div>
+              <label className="block mb-2" style={{ fontSize: "0.875rem" }}>Enlace a foto (URL)</label>
+              <input
+                type="url"
+                placeholder="https://ejemplo.com/foto-del-animal.jpg"
+                value={form.imagen}
+                onChange={(e) => { update("imagen", e.target.value); if (e.target.value) setImageError(false); }}
+                className={`${inputClass} ${imageError && !form.imagen && !imagePreview ? "border-destructive focus:ring-destructive/20 focus:border-destructive" : ""}`}
+              />
+              <p className="text-muted-foreground mt-1" style={{ fontSize: "0.75rem" }}>
+                Puedes subir la imagen a Google Drive, Imgur, etc. y pegar el enlace aqui.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-muted-foreground" style={{ fontSize: "0.75rem" }}>o</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+
+            <div>
+              <label className="block mb-2" style={{ fontSize: "0.875rem" }}>Subir foto desde tu dispositivo</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="animal-image-upload"
+                />
+                <label
+                  htmlFor="animal-image-upload"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-opacity cursor-pointer"
+                  style={{ fontSize: "0.875rem" }}
+                >
+                  <ImagePlus className="w-4 h-4" />
+                  Subir imagen
+                </label>
+                {uploadingImage && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
+              </div>
+            </div>
+          </div>
+
           {imagePreview && (
             <div className="mt-4 relative">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-48 object-cover rounded-xl"
-              />
-              <button
-                onClick={clearImage}
-                className="absolute top-2 right-2 bg-destructive text-primary-foreground rounded-full p-1"
-              >
+              <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover rounded-xl" />
+              <button onClick={clearImage} className="absolute top-2 right-2 bg-destructive text-primary-foreground rounded-full p-1">
                 <X className="w-4 h-4" />
               </button>
             </div>
           )}
         </div>
+
 
         {/* Name + species */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -453,37 +502,64 @@ export function SubmitAnimalPage() {
           </p>
         </div>
 
-        <div>
-          <label className="block mb-2">Instagram</label>
-          <input
-            type="url"
-            placeholder="https://www.instagram.com/tucuenta/"
-            value={form.contactoInstagram}
-            onChange={(e) => update("contactoInstagram", e.target.value)}
-            className={inputClass}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block mb-2">Facebook</label>
-            <input
-              type="url"
-              placeholder="https://www.facebook.com/tuperfil"
-              value={form.contactoFacebook}
-              onChange={(e) => update("contactoFacebook", e.target.value)}
-              className={inputClass}
-            />
+        {/* Social Media - At least one required */}
+        <div data-section="social-media" className={`p-4 rounded-xl border ${socialError ? "border-destructive bg-destructive/5" : "border-primary/20 bg-primary/5"}`}>
+          <div className="flex items-start gap-2 mb-3">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${
+              form.contactoInstagram || form.contactoFacebook || form.contactoTiktok
+                ? "bg-primary"
+                : socialError ? "bg-destructive" : "bg-muted-foreground/30"
+            }`}>
+              {form.contactoInstagram || form.contactoFacebook || form.contactoTiktok ? (
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary-foreground" />
+              ) : (
+                <span className="text-primary-foreground text-xs" style={{ fontWeight: 700 }}>!</span>
+              )}
+            </div>
+            <div>
+              <p className={socialError ? "text-destructive" : "text-foreground"} style={{ fontSize: "0.875rem", fontWeight: 600 }}>
+                Redes sociales (al menos una requerida) *
+              </p>
+              <p className="text-muted-foreground mt-1" style={{ fontSize: "0.8125rem" }}>
+                Proporciona al menos un perfil para verificar tu identidad y reducir envios falsos.
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="block mb-2">TikTok</label>
-            <input
-              type="url"
-              placeholder="https://www.tiktok.com/@tucuenta"
-              value={form.contactoTiktok}
-              onChange={(e) => update("contactoTiktok", e.target.value)}
-              className={inputClass}
-            />
+
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-2" style={{ fontSize: "0.875rem" }}>Instagram</label>
+              <input
+                type="url"
+                placeholder="https://www.instagram.com/tucuenta/"
+                value={form.contactoInstagram}
+                onChange={(e) => { update("contactoInstagram", e.target.value); if (e.target.value) setSocialError(false); }}
+                className={`${inputClass} ${socialError && !form.contactoInstagram ? "border-destructive/50" : ""}`}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2" style={{ fontSize: "0.875rem" }}>Facebook</label>
+                <input
+                  type="url"
+                  placeholder="https://www.facebook.com/tuperfil"
+                  value={form.contactoFacebook}
+                  onChange={(e) => { update("contactoFacebook", e.target.value); if (e.target.value) setSocialError(false); }}
+                  className={`${inputClass} ${socialError && !form.contactoFacebook ? "border-destructive/50" : ""}`}
+                />
+              </div>
+              <div>
+                <label className="block mb-2" style={{ fontSize: "0.875rem" }}>TikTok</label>
+                <input
+                  type="url"
+                  placeholder="https://www.tiktok.com/@tucuenta"
+                  value={form.contactoTiktok}
+                  onChange={(e) => { update("contactoTiktok", e.target.value); if (e.target.value) setSocialError(false); }}
+                  className={`${inputClass} ${socialError && !form.contactoTiktok ? "border-destructive/50" : ""}`}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -499,7 +575,7 @@ export function SubmitAnimalPage() {
         </div>
 
         <p className="text-muted-foreground" style={{ fontSize: "0.8125rem" }}>
-          Las redes sociales y sitio web son opcionales pero nos ayudan a verificar la legitimidad del envio. El correo electronico es obligatorio ya que sera nuestro principal medio de comunicacion contigo.
+          Al menos una red social es obligatoria para verificar tu identidad. El sitio web es opcional. El correo electronico es obligatorio y sera nuestro principal medio de comunicacion.
         </p>
 
         {/* Consent checkbox */}

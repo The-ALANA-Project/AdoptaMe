@@ -707,7 +707,7 @@ export function AdminPage() {
                         </a>
                       )}
                       {inq.telefono && (
-                        <a href={`https://wa.me/${inq.telefono.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline">
+                        <a href={`https://wa.me/${inq.telefono.replace(/\D/g, "").replace(/^(?!51)/, "51")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline">
                           <Phone className="w-4 h-4" />
                           {inq.telefono}
                         </a>
@@ -979,7 +979,7 @@ export function AdminPage() {
                           </a>
                         )}
                         {seg.adoptanteTelefono && (
-                          <a href={`https://wa.me/${seg.adoptanteTelefono.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline">
+                          <a href={`https://wa.me/${seg.adoptanteTelefono.replace(/\D/g, "").replace(/^(?!51)/, "51")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline">
                             <Phone className="w-4 h-4" />
                             {seg.adoptanteTelefono}
                           </a>
@@ -1154,7 +1154,7 @@ export function AdminPage() {
                         {(r.email || r.whatsapp) && (
                           <div className="flex flex-wrap gap-4" style={{ fontSize: "0.875rem" }}>
                             {r.email && <a href={`mailto:${r.email}`} className="flex items-center gap-1.5 text-primary no-underline hover:underline"><Mail className="w-4 h-4" />{r.email}</a>}
-                            {r.whatsapp && <a href={`https://wa.me/${r.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline"><Phone className="w-4 h-4" />{r.whatsapp}</a>}
+                            {r.whatsapp && <a href={`https://wa.me/${r.whatsapp.replace(/\D/g, "").replace(/^(?!51)/, "51")}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[#25D366] no-underline hover:underline"><Phone className="w-4 h-4" />{r.whatsapp}</a>}
                           </div>
                         )}
                         {r.donacion && (

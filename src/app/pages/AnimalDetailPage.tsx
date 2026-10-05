@@ -26,6 +26,12 @@ import { AnimalCard } from "../components/AnimalCard";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { SEO } from "../components/SEO";
 
+function toWhatsAppUrl(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const withCountry = digits.startsWith("51") ? digits : `51${digits}`;
+  return `https://wa.me/${withCountry}`;
+}
+
 // Social share icons as inline SVGs for reliability
 function TwitterIcon({ className }: { className?: string }) {
   return (
@@ -508,6 +514,12 @@ export function AnimalDetailPage() {
                     <p className="text-muted-foreground mb-3" style={{ fontSize: "0.8125rem", lineHeight: 1.6 }}>{rescuer.bio}</p>
                   )}
                   <div className="flex flex-wrap gap-2">
+                    {rescuer.whatsapp && (
+                      <a href={toWhatsAppUrl(rescuer.whatsapp)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-[#25D366] hover:border-[#25D366] transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
+                        WhatsApp
+                      </a>
+                    )}
                     {rescuer.facebook && (
                       <a href={rescuer.facebook.startsWith("http") ? rescuer.facebook : `https://${rescuer.facebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
                         <Facebook className="w-3.5 h-3.5" />
@@ -553,23 +565,31 @@ export function AnimalDetailPage() {
                   </div>
                   <div className="min-w-0">
                     <p style={{ fontWeight: 500 }}>{animal.contactoNombre}</p>
-                    <div className="flex flex-wrap gap-2 mt-1">
-                      {animal.contactoInstagram && (
-                        <a href={animal.contactoInstagram.startsWith("http") ? animal.contactoInstagram : `https://${animal.contactoInstagram}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors no-underline" style={{ fontSize: "0.875rem" }}>
-                          <Instagram className="w-3.5 h-3.5" />Instagram
-                        </a>
-                      )}
-                      {animal.contactoFacebook && (
-                        <a href={animal.contactoFacebook.startsWith("http") ? animal.contactoFacebook : `https://${animal.contactoFacebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:text-primary/80 transition-colors no-underline" style={{ fontSize: "0.875rem" }}>
-                          <Facebook className="w-3.5 h-3.5" />Facebook
-                        </a>
-                      )}
-                      {animal.contactoTiktok && (
-                        <a href={animal.contactoTiktok.startsWith("http") ? animal.contactoTiktok : `https://${animal.contactoTiktok}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors no-underline" style={{ fontSize: "0.875rem" }}>
-                          TikTok
-                        </a>
-                      )}
-                    </div>
+                    {(animal.contactoWhatsapp || animal.contactoInstagram || animal.contactoFacebook || animal.contactoTiktok) && (
+                      <div className="flex flex-wrap gap-2 mt-1.5">
+                        {animal.contactoWhatsapp && (
+                          <a href={toWhatsAppUrl(animal.contactoWhatsapp)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-background border border-border rounded-lg text-[#25D366] hover:border-[#25D366] transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                            <WhatsAppIcon className="w-3.5 h-3.5" />WhatsApp
+                          </a>
+                        )}
+                        {animal.contactoInstagram && (
+                          <a href={animal.contactoInstagram.startsWith("http") ? animal.contactoInstagram : `https://${animal.contactoInstagram}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                            <Instagram className="w-3.5 h-3.5" />Instagram
+                          </a>
+                        )}
+                        {animal.contactoFacebook && (
+                          <a href={animal.contactoFacebook.startsWith("http") ? animal.contactoFacebook : `https://${animal.contactoFacebook}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                            <Facebook className="w-3.5 h-3.5" />Facebook
+                          </a>
+                        )}
+                        {animal.contactoTiktok && (
+                          <a href={animal.contactoTiktok.startsWith("http") ? animal.contactoTiktok : `https://${animal.contactoTiktok}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-background border border-border rounded-lg text-primary hover:border-primary transition-colors no-underline" style={{ fontSize: "0.8125rem" }}>
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.73a8.19 8.19 0 004.76 1.52V6.8a4.84 4.84 0 01-1-.11z"/></svg>
+                            TikTok
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
