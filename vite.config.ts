@@ -26,6 +26,9 @@ export default defineConfig({
     {
       name: 'inject-og-meta',
       transformIndexHtml(html) {
+        // Remove the Figma Make default noindex tag baked into the template
+        html = html.replace(/<meta\s+name="robots"[^>]*>/i, '<meta name="robots" content="index, follow" />');
+
         // Add Google Analytics and OG meta tags
         const headTags = `
     <!-- Google Analytics -->
